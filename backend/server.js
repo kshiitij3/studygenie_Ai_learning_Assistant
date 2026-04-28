@@ -7,6 +7,8 @@ import errorHandler from './middleware/errorHandler.js';
 import dotenv from 'dotenv';
 import authRoutes from './routes/authRoutes.js';
 import documentRoutes from './routes/documentRoutes.js';
+import flashcardRoutes from './routes/flashcardsRoutes.js';
+import aiRoutes from './routes/aiRoutes.js';
 
 //ES6 module _dirname alternative
 
@@ -40,6 +42,8 @@ app.use('/uploads',express.static(path.join(__dirname,'uploads')));
 //routes
 app.use('/api/auth', authRoutes);
 app.use('/api/documents',documentRoutes);
+app.use('/api/flashcards',flashcardRoutes);
+app.use('/api/ai', aiRoutes);
 
 // basic health route until feature routes are wired
 app.get('/', (req, res) => {
