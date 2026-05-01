@@ -10,6 +10,7 @@ import documentRoutes from './routes/documentRoutes.js';
 import flashcardRoutes from './routes/flashcardsRoutes.js';
 import aiRoutes from './routes/aiRoutes.js';
 import QuizRoutes from './routes/quizRoutes.js';
+import progressRoutes from './routes/progressRoutes.js';
 
 //ES6 module _dirname alternative
 
@@ -46,6 +47,7 @@ app.use('/api/documents',documentRoutes);
 app.use('/api/flashcards',flashcardRoutes);
 app.use('/api/ai', aiRoutes);
 app.use('/api/quizzes', QuizRoutes);
+app.use('/api/progress', progressRoutes);
 
 // basic health route until feature routes are wired
 app.get('/', (req, res) => {
