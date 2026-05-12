@@ -1,5 +1,6 @@
 import React from "react";
 import { BrowserRouter as Router, Routes, Route, Navigate } from "react-router-dom";
+import { useAuth } from "./context/AuthContext.jsx";
 import LoginPage from "./pages/Auth/LoginPage.jsx";
 import RegisterPage from "./pages/Auth/RegisterPage.jsx";
 import DashboardPage from "./pages/Dashboard/DashboardPage.jsx";
@@ -14,9 +15,8 @@ import QuizResultPage from "./pages/Quizzes/QuizzesResultPage.jsx";
 import ProtectedRoute from "./component/auth/ProtectedRoute.jsx";
 
 const App = () => {
-  const isAuthenticated = true;
-  const loading = false;
-
+  const {isAuthenticated,loading}=useAuth()
+  
   if (loading) {
     return (
       <div className="flex items-center justify-center h-screen">
