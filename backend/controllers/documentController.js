@@ -4,6 +4,7 @@ import Quiz from '../models/Quiz.js';
 import {extractTextFromPDF} from '../utils/pdfParser.js';
 import {chunkText} from '../utils/textChunker.js';
 import fs from 'fs/promises';
+import path from 'path';
 import mongoose from 'mongoose';
 //@desc Upload PDF Document
 //@route POST/api/document/upload
@@ -188,11 +189,22 @@ export const getDocuments =async(req, res, next)=>{
         });
 
        }
-       //delete the file feom filesystem
-       await  fs.unlink(document.filepath).catch(()=>{});
+       // Resolve local file path from stored URL
+       let filePath = document.filepath;
+       if (filePath.startsWith('http://') || filePath.startsWith('https://')) {
+         try {
+           const url = new URL(filePath);
+           const relativePath = url.pathname.replace(/^\//, '');
+           filePath = path.join(process.cwd(), relativePath);
+         } catch (err) {
+           filePath = document.filepath;
+         }
+       }
+
+       await fs.unlink(filePath).catch(()=>{});
 
        //delete document
-       document.deleteOne();
+       await document.deleteOne();
         res.status(200).json({
           success: true,
           message:"Document delete successfully",
