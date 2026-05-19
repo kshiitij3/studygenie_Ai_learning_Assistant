@@ -8,6 +8,7 @@ import {ArrowLeft, ExternalLink} from 'lucide-react';
 import PageHeader from '../../component/common/PageHeader';
 import Tabs from '../../component/common/Tabs';
 import AIActions from '../../component/ai/AIActions';
+import FlashcardManager from '../../component/Flashcards/FlashcardManager';
 const DocumentDetailPage= ()=>{
 
   const {id} =useParams();
@@ -90,11 +91,11 @@ const renderAIActions= ()=>{
 };
 
 const renderFlashcardsTab =()=>{
-  return "renderFlashcardsTab"
+  return <FlashcardManager documentId={id} />
 };
 
 const renderQuizzesTab =()=>{
-  return "renderQuizzesTab"
+  return <QuizManager documentId={id}/>
 };
 
 const tabs =[
