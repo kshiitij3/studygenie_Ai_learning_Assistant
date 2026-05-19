@@ -7,6 +7,7 @@ import toast from 'react-hot-toast';
 import {ArrowLeft, ExternalLink} from 'lucide-react';
 import PageHeader from '../../component/common/PageHeader';
 import Tabs from '../../component/common/Tabs';
+import AIActions from '../../component/ai/AIActions';
 const DocumentDetailPage= ()=>{
 
   const {id} =useParams();
@@ -21,7 +22,7 @@ const DocumentDetailPage= ()=>{
         setDocument((data));
       }catch(error){
         toast.error('failed to fetch document details');
-        console.error('Failed to fetch document details');
+        console.error('Failed to fetch document details', error);
       }finally{
         setLoading(false);
       }
@@ -85,7 +86,7 @@ const renderChat=()=>{
 };
 
 const renderAIActions= ()=>{
-  return "renderAIActions"
+  return <AIActions/>
 };
 
 const renderFlashcardsTab =()=>{

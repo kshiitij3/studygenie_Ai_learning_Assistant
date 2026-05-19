@@ -1,11 +1,10 @@
 import React, {useState, useEffect, useRef} from 'react';
-import {send, MessageSquare, Sparkles} from 'lucide-react';
+import {Send, MessageSquare, Sparkles} from 'lucide-react';
 import {useParams} from 'react-router-dom';
 import aiService from '../../services/aiService';
 import {useAuth} from '../../context/AuthContext';
 import Spinner from '../common/Spinner';
 import MarkdownRenderer from '../common/MarkdownRenderer';
-import { isAxiosError } from 'axios';
 
 const ChatInterface = () =>{
    const {id : documentId} = useParams();
@@ -33,7 +32,7 @@ const ChatInterface = () =>{
       }
     };
     fetchChatHistory();
-   },[documentid]);
+   },[documentId]);
 
    useEffect(()=>{
     scrollToBottom();
@@ -53,7 +52,7 @@ const ChatInterface = () =>{
         const assistantMessage ={
           role:'assistant',
           content: response.data.answer,
-          timestamp: new Data(),
+          timestamp: new Date(),
           relevantChunks: response.data.relevantChunks
         };
         setHistory(prev =>[...prev, assistantMessage]);
@@ -72,11 +71,38 @@ const ChatInterface = () =>{
     }
    };
 
-   const renserMessage =(msg, index) =>{
-    return "renderMessage"
+   const renderMessage =(msg, index) =>{
+    const isUser = msg.role ==='user';
+    return (
+      <div key={index} className={`flex items-start gap-3 my-4 ${isUser ? 'justify-end':''}`}>
+        {!isUser &&(
+          <div className='w-9 h-9 rounded-xl bg-linear-to-br from-emerald-400 to-teal-500 shadow-lg shadow-emerald-500/25 flex items-center justify-center shrink-0'>
+            <Sparkles className='w-4 h-4 text-white' strokeWidth={2}/>
+          </div>
+        )}
+        <div className={`max-w-lg p-4 rounded-2xl shadow-sm ${
+        isUser
+        ? 'bg-linear-to-br from-emerald-500 to-teal-500 text-white rounded-br-md'
+        : 'bg-white border border-slate-200/60 text-slate-800 rounded-bl-md'
+        }`}>
+          {isUser ?(
+            <p className='text-sm leading-relaxed'>{msg.content}</p>
+          ):(
+            <div className='prose prose-sm max-w-none prose-slate'>
+              <MarkdownRenderer content = {msg.content}/>
+            </div>
+          )}
+        </div>
+        {isUser && (
+          <div className='w-9 h-9 rounded-xl bg-linear-to-br from-slate-200 to-slate-300 flex items-center justify-center text-slate-700 font-semibold text-sm shrink-0 shadow-sm'>
+            {user?.username?.charAt(0).toUpperCase() || 'U'}
+          </div>
+        )}
+      </div>
+    );
    };
 
-   if(intialLoading){
+   if(initialLoading){
     return(
       <div className='flex flex-col h-[70vh] bg-white/80 backdrop-blur-xl border border-slate-200/60 rounded-2xl items-center justify-center shadow-xl shadow-slate-200/50'>
         <div className='w-14 h-14 rounded-2xl bg-linear-to-br from-emerald-100 to-teal-100 flex items-center justify-center mb-4'>
@@ -88,13 +114,13 @@ const ChatInterface = () =>{
     );
    }
    return(
-    <div className='flex flex-col h-[70vh] bg-white/80 backdrop-blur-xl border border-slate-200/60 rouded-2xl shadow-xl shadow-slate-200/50 overflow-hidden'>
+    <div className='flex flex-col h-[70vh] bg-white/80 backdrop-blur-xl border border-slate-200/60 rounded-2xl shadow-xl shadow-slate-200/50 overflow-hidden'>
       {/*Messages Area */}
       <div className='flex-1 p-6 overflow-y-auto bg-linear-to-br from-slate-50/50 via-white/50 to-slate-50/50'>
         {history.length ===0 ? (
           <div className='flex flex-col items-center justify-center h-full text-center'>
             <div className='w-16 h-16 rounded-2xl bg-linear-to-br from-emerald-100 to-teal-100 flex items-center justify-center mb-4 shadow-lg shadow-emerald-500/10'>
-              <MessageSquare className='w-8 h-8 text-emerald-600' strokewidth={2} />
+              <MessageSquare className='w-8 h-8 text-emerald-600' strokeWidth={2} />
             </div>
             <h3 className='text-base font-semibold text-slate-900 mb-2'>Start a conversation</h3>
             <p className='text-sm text-slate-500'>Ask me anything about the document</p>
@@ -126,7 +152,7 @@ const ChatInterface = () =>{
           value={message}
           onChange={(e)=>setMessage(e.target.value)}
           placeholder='Ask a follow-up question...'
-          className='flex-1 h-12 px-4 border-2 border-slate-200 rounded-xl bg-slate-50/50 text-slate-900 placeholder-slate-400 textt-sm font-medium transition-all duration-200 focus:border-emerald-500 focus:bg-white focus:shadow-lg focus:shadow-emerald-500/10'
+          className='flex-1 h-12 px-4 border-2 border-slate-200 rounded-xl bg-slate-50/50 text-slate-900 placeholder-slate-400 text-sm font-medium transition-all duration-200 focus:border-emerald-500 focus:bg-white focus:shadow-lg focus:shadow-emerald-500/10'
           disabled={loading}
           />
           <button
