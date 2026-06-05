@@ -8,7 +8,9 @@ const FlashcardSetCard = ({ flashcardSet }) => {
  const navigate = useNavigate();
 
  const handleStudyNow = () => {
-  navigate(`/documents/${flashcardSet.documentId._id}/flashcards`);
+  const documentId = flashcardSet?.documentId?._id || flashcardSet?.documentId;
+  if (!documentId) return;
+  navigate(`/document/${documentId}/flashcards`);
  };
 
  const reviewedCount = flashcardSet.cards.filter(card => card.lastReviewed).length;
@@ -93,4 +95,4 @@ const FlashcardSetCard = ({ flashcardSet }) => {
    </div>  
 };
 
-export default FlashcardSetCard
+export default FlashcardSetCard;
