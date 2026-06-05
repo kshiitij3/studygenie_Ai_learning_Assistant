@@ -9,6 +9,7 @@ import PageHeader from '../../component/common/PageHeader';
 import Tabs from '../../component/common/Tabs';
 import AIActions from '../../component/ai/AIActions';
 import FlashcardManager from '../../component/Flashcards/FlashcardManager';
+import QuizManager from '../../component/quizzes/QuizManager';
 const DocumentDetailPage= ()=>{
 
   const {id} =useParams();

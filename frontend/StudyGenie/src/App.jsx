@@ -11,7 +11,7 @@ import DocumentDetailPage from "./pages/Documents/DocumentDetailPage.jsx";
 import DocumentListPage from "./pages/Documents/DocumentListPage.jsx";
 import ProfilePage from "./pages/Profile/ProfilePage.jsx";
 import QuizTakePage from "./pages/Quizzes/QuizTakePage.jsx";
-import QuizResultPage from "./pages/Quizzes/QuizzesResultPage.jsx";
+import QuizResultPage from "./pages/Quizzes/QuizResultPage.jsx";
 import ProtectedRoute from "./component/auth/ProtectedRoute.jsx";
 
 const App = () => {

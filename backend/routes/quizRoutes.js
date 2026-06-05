@@ -16,6 +16,6 @@ router.get('/:documentId', getQuizzes);
 router.get('/:id/results', getQuizResults);
 router.get('/quiz/:id', getQuizById);
 router.post('/:id/submit', submitQuiz);
-router.delete('/:Id', deleteQuiz);
+router.delete('/:id', deleteQuiz);
 
 export default router;
