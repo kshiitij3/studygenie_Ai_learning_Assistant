@@ -1,5 +1,6 @@
 import dotenv from 'dotenv';
 import { GoogleGenAI } from '@google/genai';
+import { chunkText } from './textChunker.js';
 
 dotenv.config();
 
@@ -11,13 +12,86 @@ if (!process.env.GEMINI_API_KEY) {
 }
 
 /**
- * Generate flashcards from text
+ * Deduplicate flashcards based on similarity
+ * @param {Array<Object>} cards - Array of flashcard objects
+ * @returns {Array<Object>}
+ */
+const deduplicateFlashcards = (cards) => {
+  const unique = [];
+  const questionSet = new Set();
+
+  for (const card of cards) {
+    const normalizedQ = card.question.toLowerCase().replace(/[^\w\s]/g, '').trim();
+    
+    // Check if similar question already exists
+    const isDuplicate = Array.from(questionSet).some(existingQ => {
+      const existingNorm = existingQ.toLowerCase().replace(/[^\w\s]/g, '').trim();
+      // Simple similarity check - if 70% of words match, consider duplicate
+      const existingWords = new Set(existingNorm.split(/\s+/));
+      const currentWords = normalizedQ.split(/\s+/);
+      const matches = currentWords.filter(w => existingWords.has(w)).length;
+      const similarity = matches / Math.max(existingWords.size, currentWords.length);
+      return similarity > 0.7;
+    });
+
+    if (!isDuplicate) {
+      unique.push(card);
+      questionSet.add(card.question);
+    }
+  }
+
+  return unique;
+};
+
+/**
+ * Generate flashcards from text chunks (improved version)
  * @param {string} text - Document text
  * @param {number} count - Number of flashcards to generate
  * @returns {Promise<Array<{question: string, answer: string, difficulty: string}>>}
  */
 
 export const generateFlashcards = async (text, count = 10) => {
+  // Split text into chunks for comprehensive coverage
+  const chunks = chunkText(text, 800, 100);
+  
+  // If text is short, use old method
+  if (chunks.length === 0 || text.length < 2000) {
+    return generateFlashcardsFromText(text, count);
+  }
+
+  const cardsPerChunk = Math.ceil(count / chunks.length);
+  const allCards = [];
+
+  try {
+    // Generate flashcards from each chunk in parallel
+    const chunkPromises = chunks.map(chunk =>
+      generateFlashcardsFromText(chunk.content, cardsPerChunk).catch(err => {
+        console.warn('Error generating flashcards from chunk:', err.message);
+        return [];
+      })
+    );
+
+    const results = await Promise.all(chunkPromises);
+    results.forEach(cards => allCards.push(...cards));
+
+    // Deduplicate and return top results
+    const uniqueCards = deduplicateFlashcards(allCards);
+    return uniqueCards.slice(0, count);
+  } catch (error) {
+    console.error('Bulk flashcard generation error:', error);
+    // Fallback to single chunk
+    return generateFlashcardsFromText(text.substring(0, 3000), count);
+  }
+};
+
+/**
+ * Generate flashcards from a single text chunk
+ * @param {string} text - Document text
+ * @param {number} count - Number of flashcards to generate
+ * @returns {Promise<Array<{question: string, answer: string, difficulty: string}>>}
+ */
+
+const generateFlashcardsFromText = async (text, count = 10) => {
   const prompt = `Generate exactly ${count} educational flashcards from the following text.
   Format each flashcard as:
   Q: [Clear, specific question]
@@ -27,7 +101,7 @@ export const generateFlashcards = async (text, count = 10) => {
   Separate each flashcard with "---"
   
   Text:
-  ${text.substring(0, 1500)}`;
+  ${text.substring(0, 2000)}`;
 
   try {
 
@@ -80,6 +154,47 @@ export const generateFlashcards = async (text, count = 10) => {
  */
 
 export const generateQuiz = async (text, numQuestions = 5) => {
+  // Split text into chunks for comprehensive coverage
+  const chunks = chunkText(text, 800, 100);
+  
+  // If text is short, use old method
+  if (chunks.length === 0 || text.length < 2000) {
+    return generateQuizFromText(text, numQuestions);
+  }
+
+  const questionsPerChunk = Math.ceil(numQuestions / chunks.length);
+  const allQuestions = [];
+
+  try {
+    // Generate quiz from each chunk in parallel
+    const chunkPromises = chunks.map(chunk =>
+      generateQuizFromText(chunk.content, questionsPerChunk).catch(err => {
+        console.warn('Error generating quiz from chunk:', err.message);
+        return [];
+      })
+    );
+
+    const results = await Promise.all(chunkPromises);
+    results.forEach(questions => allQuestions.push(...questions));
+
+    // Deduplicate and return top results
+    const uniqueQuestions = deduplicateFlashcards(allQuestions); // Use same dedup logic
+    return uniqueQuestions.slice(0, numQuestions);
+  } catch (error) {
+    console.error('Bulk quiz generation error:', error);
+    // Fallback to single chunk
+    return generateQuizFromText(text.substring(0, 3000), numQuestions);
+  }
+};
+
+/**
+ * Generate quiz from a single text chunk
+ * @param {string} text - Document text
+ * @param {number} numQuestions - Number of questions
+ * @returns {Promise<Array<{question: string, options: Array, correctAnswer: string, explanation: string, difficulty: string}>>}
+ */
+
+const generateQuizFromText = async (text, numQuestions = 5) => {
   const prompt = `Generate exactly ${numQuestions} multiple choice questions from the following text.
   Format each question as:
   Q: [Question]
@@ -94,7 +209,7 @@ export const generateQuiz = async (text, numQuestions = 5) => {
   Separate questions with "---"
   
   Text:
-  ${text.substring(0, 1500)}`;
+  ${text.substring(0, 2000)}`;
 
   try {
 
@@ -145,17 +260,72 @@ export const generateQuiz = async (text, numQuestions = 5) => {
 };
 
 /**
- *  Generate document summary
+ *  Generate document summary (improved version)
  * @param {string} text - Document text
  * @returns {Promise<string>}
  */
 
 export const generateSummary = async (text) => {
-  const prompt = `Provide a concise summary of the following text. highlighting the key concepts, main ideas, and important points.
-  Keep the summary clear and structured.
+  // Split text into chunks
+  const chunks = chunkText(text, 800, 100);
+  
+  // If very short, use single prompt
+  if (chunks.length === 0 || text.length < 2000) {
+    return generateSummaryFromText(text.substring(0, 3000));
+  }
+
+  try {
+    // Generate summaries from key chunks (first, middle, last) for better coverage
+    const keyChunks = [];
+    keyChunks.push(chunks[0]); // First chunk
+    
+    if (chunks.length > 2) {
+      keyChunks.push(chunks[Math.floor(chunks.length / 2)]); // Middle chunk
+    }
+    
+    if (chunks.length > 1) {
+      keyChunks.push(chunks[chunks.length - 1]); // Last chunk
+    }
+
+    const summaryPromises = keyChunks.map(chunk =>
+      generateSummaryFromText(chunk.content).catch(err => {
+        console.warn('Error generating summary from chunk:', err.message);
+        return '';
+      })
+    );
+
+    const summaries = await Promise.all(summaryPromises);
+    const combinedContext = summaries.filter(s => s).join('\n\n');
+
+    // Generate final comprehensive summary from partial summaries
+    if (combinedContext.length > 0) {
+      return generateSummaryFromText(combinedContext, true);
+    }
+
+    return generateSummaryFromText(text.substring(0, 3000));
+  } catch (error) {
+    console.error('Bulk summary generation error:', error);
+    // Fallback to single chunk
+    return generateSummaryFromText(text.substring(0, 3000));
+  }
+};
+
+/**
+ * Generate summary from text
+ * @param {string} text - Document text
+ * @param {boolean} isComposite - Whether summarizing partial summaries
+ * @returns {Promise<string>}
+ */
+
+const generateSummaryFromText = async (text, isComposite = false) => {
+  const instruction = isComposite 
+    ? 'Combine and synthesize the following summaries into one comprehensive summary'
+    : 'Provide a concise summary of the following text, highlighting the key concepts, main ideas, and important points';
+
+  const prompt = `${instruction}. Keep the summary clear and structured.
   
   Text:
-  ${text.substring(0, 2000)}`;
+  ${text.substring(0, 3000)}`;
 
   try {
 
