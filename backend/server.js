@@ -69,14 +69,18 @@ app.use((req, res) => {
 
 // error handler
 app.use(errorHandler);
-//start server
 
 const PORT = process.env.PORT || 8000;
-app.listen(PORT, () => {
-  console.log(`Server running in ${NODE_ENV} mode on port ${PORT}`);
-});
+
+if (process.env.VERCEL !== '1') {
+  app.listen(PORT, () => {
+    console.log(`Server running in ${NODE_ENV} mode on port ${PORT}`);
+  });
+}
+
+export default app;
 
 process.on('unhandledRejection', (err) => {
-  console.error('Unhandled Rejection:',err.message);
+  console.error('Unhandled Rejection:', err.message);
   process.exit(1);
 });
