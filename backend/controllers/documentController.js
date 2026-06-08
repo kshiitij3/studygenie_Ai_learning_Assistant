@@ -56,7 +56,7 @@ export const uploadDocument = async(req, res, next)=>{
         });
       }
 //construct the url for the upload file
-     const baseUrl = `http://localhost:${process.env.PORT || 8000}`;
+     const baseUrl = 'https://studygenie-ai-learning-assistant.vercel.app';
      const fileUrl = `${baseUrl}/uploads/documents/${encodeURIComponent(req.file.filename)}`;
        
      const document = await Document.create({
