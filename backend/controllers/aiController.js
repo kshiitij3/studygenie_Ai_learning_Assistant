@@ -36,11 +36,27 @@ export const generateFlashcards = async (req, res, next) => {
       });
      }
 
+     if(!document.extractedText?.trim()) {
+      return res.status(422).json({
+        success: false,
+        error: 'No readable text was extracted from this PDF. Please try a text-based PDF.',
+        statusCode: 422
+      });
+     }
+
      // Generate flashcards using Gemini
      const cards = await geminiService.generateFlashcards(
       document.extractedText,
       parseInt(count)
      );
+
+     if(!cards.length) {
+      return res.status(422).json({
+        success: false,
+        error: 'AI could not generate flashcards from this document. Please try another PDF or generate fewer cards.',
+        statusCode: 422
+      });
+     }
 
      // Save to database
      const flashcardSet = await Flashcard.create({
@@ -95,11 +111,27 @@ export const generateQuiz = async (req, res, next) => {
       });
      }
 
+     if(!document.extractedText?.trim()) {
+      return res.status(422).json({
+        success: false,
+        error: 'No readable text was extracted from this PDF. Please try a text-based PDF.',
+        statusCode: 422
+      });
+     }
+
      // Generate quiz using Gemini
      const questions = await geminiService.generateQuiz(
       document.extractedText,
       parseInt(numQuestions)
      );
+
+     if(!questions.length) {
+      return res.status(422).json({
+        success: false,
+        error: 'AI could not generate quiz questions from this document. Please try another PDF or fewer questions.',
+        statusCode: 422
+      });
+     }
 
      // Save to database
      const quiz = await Quiz.create({

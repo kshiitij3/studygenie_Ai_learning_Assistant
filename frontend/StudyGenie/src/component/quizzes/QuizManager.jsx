@@ -65,7 +65,7 @@ const QuizManager = ({documentId}) => {
       await quizService.deleteQuiz(selectedQuiz._id);
       toast.success(`'${selectedQuiz.title || 'Quiz'}' deleted.`);
       setIsDeleteModalOpen(false);
-      setSetToDelete(null);
+      setSelectedQuiz(null);
       setQuizzes(quizzes.filter(q => q._id !== selectedQuiz._id));
     } catch (error) {
       toast.error(error.message || "Failed to delete quiz.");

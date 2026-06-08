@@ -4,7 +4,6 @@ import PageHeader from '../../component/common/PageHeader';
 import Spinner from "../../component/common/Spinner";
 import Button from '../../component/common/Button';
 import authService from '../../services/authService';
-import { useAuth } from '../../context/AuthContext';
 import { User, Mail, Lock} from 'lucide-react';
 
 

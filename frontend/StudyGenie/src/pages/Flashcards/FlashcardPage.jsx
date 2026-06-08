@@ -80,7 +80,7 @@ const FlashcardPage = () => {
     try {
       await flashcardService.reviewFlashcard(currentCard._id, index);
       toast.success("Flashcard reviewed!");
-    } catch (error) {
+    } catch {
       toast.error("Failed to review flashcard.");
     }
   };
@@ -94,7 +94,7 @@ const FlashcardPage = () => {
       )
     );
      toast.success("Flashcard starred status updated!");
-    } catch (error) {
+    } catch {
       toast.error("Failed to update star status.");
     }
   };

@@ -14,7 +14,7 @@ export const extractTextFromPDF = async(filePath)=>{
   const  data = await parser.getText();
   return{
     text: data.text,
-    numPages:data.numpages,
+    numPages:data.total,
     info:data.info
   };
  }

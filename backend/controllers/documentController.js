@@ -6,6 +6,33 @@ import {chunkText} from '../utils/textChunker.js';
 import fs from 'fs/promises';
 import path from 'path';
 import mongoose from 'mongoose';
+import {fileURLToPath} from 'url';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+const uploadDir = path.join(__dirname, '../uploads/documents');
+
+const resolveDocumentFilePath = (document) => {
+  const storedPath = document?.filepath;
+
+  if (!storedPath) {
+    return null;
+  }
+
+  if (path.isAbsolute(storedPath)) {
+    return storedPath;
+  }
+
+  if (storedPath.startsWith('http://') || storedPath.startsWith('https://')) {
+    const url = new URL(storedPath);
+    const filename = decodeURIComponent(path.basename(url.pathname));
+    return path.join(uploadDir, filename);
+  }
+
+  const filename = decodeURIComponent(path.basename(storedPath));
+  return path.join(uploadDir, filename);
+};
+
 //@desc Upload PDF Document
 //@route POST/api/document/upload
 //@access private
@@ -30,7 +57,7 @@ export const uploadDocument = async(req, res, next)=>{
       }
 //construct the url for the upload file
      const baseUrl = `http://localhost:${process.env.PORT || 8000}`;
-     const fileUrl = `${baseUrl}/uploads/documents/${req.file.filename}`;
+     const fileUrl = `${baseUrl}/uploads/documents/${encodeURIComponent(req.file.filename)}`;
        
      const document = await Document.create({
       userId: req.user._id,
@@ -172,6 +199,49 @@ export const getDocuments =async(req, res, next)=>{
     next(error);
   }
  };
+ //@desc View PDF file
+ //@route Get /api/documents/:id/file
+ //@access private
+ export const getDocumentFile = async(req, res, next)=>{
+     try{
+       const document = await Document.findOne({
+           _id: req.params.id,
+           userId:req.user._id
+       });
+
+       if(!document){
+        return res.status(404).json({
+          success: false,
+          error: "Document Not found",
+          statusCode:404
+        });
+       }
+
+       const filePath = resolveDocumentFilePath(document);
+
+       if(!filePath){
+        return res.status(404).json({
+          success: false,
+          error: "PDF file not found",
+          statusCode:404
+        });
+       }
+
+       await fs.access(filePath);
+       res.setHeader('Content-Type', 'application/pdf');
+       res.setHeader('Content-Disposition', `inline; filename="${document.fileName.replace(/"/g, '')}"`);
+       return res.sendFile(filePath);
+     }catch(error){
+       if(error.code === 'ENOENT'){
+        return res.status(404).json({
+          success:false,
+          error:'PDF file not found on server',
+          statusCode:404
+        });
+       }
+       next(error);
+     }
+ };
  //@desc delete Document
  //@route delete /api/documents/:id
  //@access privete
@@ -190,18 +260,11 @@ export const getDocuments =async(req, res, next)=>{
 
        }
        // Resolve local file path from stored URL
-       let filePath = document.filepath;
-       if (filePath.startsWith('http://') || filePath.startsWith('https://')) {
-         try {
-           const url = new URL(filePath);
-           const relativePath = url.pathname.replace(/^\//, '');
-           filePath = path.join(process.cwd(), relativePath);
-         } catch (err) {
-           filePath = document.filepath;
-         }
-       }
+       let filePath = resolveDocumentFilePath(document);
 
-       await fs.unlink(filePath).catch(()=>{});
+       if(filePath){
+        await fs.unlink(filePath).catch(()=>{});
+       }
 
        //delete document
        await document.deleteOne();

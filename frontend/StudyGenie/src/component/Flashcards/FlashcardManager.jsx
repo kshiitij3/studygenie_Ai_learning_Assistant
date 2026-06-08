@@ -88,7 +88,7 @@ const FlashcardManager = ({documentId}) => {
     try {
       await flashcardService.reviewFlashcard(currentCard._id, index);
       toast.success("Flashcard reviewed!");
-    } catch (error) {
+    } catch {
       toast.error("Failed to review flashcard.");
     }
   };
@@ -108,7 +108,7 @@ const FlashcardManager = ({documentId}) => {
       setFlashcardSets(updatedSets);
       setSelectedSet(updatedSets.find((set) => set._id === selectedSet._id));
       toast.success("Flashcard starred status updated!");
-    } catch (error) {
+    } catch {
       toast.error("Failed to update star status.");
     }
   };

@@ -41,11 +41,23 @@ const getDocumentById = async (id) => {
    }
 };
 
+const getDocumentFile = async (id) => {
+   try {
+     const response = await axiosInstance.get(API_PATHS.DOCUMENTS.GET_DOCUMENT_FILE(id), {
+      responseType: 'blob',
+    });
+     return response.data;
+   } catch (error) {
+    throw error.response?.data || { message: 'Failed to fetch document file' };
+   }
+};
+
 const documentService = {
   getDocuments,
   uploadDocument,
   deleteDocument,
   getDocumentById,
+  getDocumentFile,
 };
 
 export default documentService;

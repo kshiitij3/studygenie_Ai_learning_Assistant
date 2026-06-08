@@ -15,6 +15,8 @@ const DocumentDetailPage= ()=>{
   const {id} =useParams();
   const [document, setDocument] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [pdfUrl, setPdfUrl] = useState(null);
+  const [pdfLoading, setPdfLoading] = useState(false);
   const [activeTab, setActiveTab]= useState('Content');
 
   useEffect(()=>{
@@ -32,14 +34,50 @@ const DocumentDetailPage= ()=>{
   fetchDocumentDetails();
 },
 [id]);
-//Helper function to get the PDF url
-const getPDFUrl =()=>{
-  if(!document?.data?.filepath) return null;
+useEffect(() => {
+  if (!document?.data?.filepath) {
+    setPdfUrl(null);
+    return;
+  }
 
-  const filePath = document.data.filepath;
+  let objectUrl;
+  const fetchPdf = async () => {
+    setPdfLoading(true);
+    try {
+      const blob = await documentService.getDocumentFile(id);
+      objectUrl = URL.createObjectURL(blob);
+      setPdfUrl(objectUrl);
+    } catch (error) {
+      console.error('Failed to load protected PDF, falling back to stored URL', error);
+      setPdfUrl(getStoredPDFUrl(document.data.filepath));
+    } finally {
+      setPdfLoading(false);
+    }
+  };
+
+  fetchPdf();
+
+  return () => {
+    if (objectUrl) {
+      URL.revokeObjectURL(objectUrl);
+    }
+  };
+}, [document, id]);
+//Helper function to get the stored PDF url
+const getStoredPDFUrl =(filePath)=>{
+  if(!filePath) return null;
 
   if(filePath.startsWith('http://')|| filePath.startsWith('https://')){
-    return filePath;
+    try {
+      const url = new URL(filePath);
+      url.pathname = url.pathname
+        .split('/')
+        .map((part) => encodeURIComponent(decodeURIComponent(part)))
+        .join('/');
+      return url.toString();
+    } catch {
+      return filePath;
+    }
   }
 
   const baseUrl = import.meta.env.VITE_API_URL || 'http://localhost:8000';
@@ -53,15 +91,16 @@ const renderContent =()=>{
   if(!document || !document.data ||!document.data.filepath){
     return <div className="text-center p-8">PDF not available.</div>
   }
-
-  const PdfUrl =getPDFUrl();
+  if(pdfLoading || !pdfUrl){
+    return <Spinner/>
+  }
 
   return(
     <div className="bg-white border border-gray-300 rounded-lg overflow-hidden shadow-sm">
       <div className="flex items-center justify-between p-4 bg-gray-50 border-b border-gray-300">
         <span className="text-sm font-medium text-gray-700">Document Viewer</span>
         <a
-        href ={PdfUrl}
+        href ={pdfUrl}
         target= "_blank"
         rel="noopener noreferrer"
         className="inline-flex items-center gap-1.5 text-sm text-blue-600 hover:text-blue-700 font-medium transition-colors">
@@ -71,12 +110,12 @@ const renderContent =()=>{
       </div>
       <div className="bg-gray-100 p-1">
         <iframe 
-        src={PdfUrl}
+        src={pdfUrl}
         className="w-full h-[70vh] bg-white rounded border border-gray-300"
         title="PDF viewer"
         frameBorder="0"
         style={{
-          colorSchema:'light',
+          colorScheme:'light',
         }}/>
       </div>
     </div>

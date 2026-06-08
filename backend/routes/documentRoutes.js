@@ -3,6 +3,7 @@ import {
   uploadDocument,
   getDocuments,
   getDocument,
+  getDocumentFile,
   deleteDocument,
 } from '../controllers/documentController.js';
 import protect  from '../middleware/auth.js'; 
@@ -13,6 +14,7 @@ const router =express.Router();
 router.use(protect);
  router.post('/upload',upload.single('file'),uploadDocument);
  router.get('/',getDocuments);
+ router.get('/:id/file',getDocumentFile);
  router.get('/:id',getDocument);
  router.delete('/:id',deleteDocument);
 

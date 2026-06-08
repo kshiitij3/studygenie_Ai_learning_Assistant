@@ -12,7 +12,7 @@ return(
       onClick={toggleSidebar}
       className='md:hidden inline-flex items-center justify-center w-10 h-10 text-slate-600 hover:text-slate-900 hover:bg-slate-100 rounded-xl transition-all duration-200'
       arial-label="Toggle sidebar">
-          <Menu size={24}/>
+      <Menu size={24}/>
       </button>
    
     <div className='hidden md:block'> </div>

@@ -121,12 +121,13 @@ const generateFlashcardsFromText = async (text, count = 10) => {
       let question = '', answer = '', difficulty = 'medium';
 
       for (const line of lines) {
-        if (line.startsWith('Q:')) {
-          question = line.substring(2).trim();
-        } else if (line.startsWith('A:')) {
-          answer = line.substring(2).trim();
-        } else if (line.startsWith('D:')) {
-          const diff = line.substring(2).trim().toLowerCase();
+        const trimmed = line.trim().replace(/^[-*]\s*/, '').replace(/^\d+\.\s*/, '').replace(/\*\*/g, '');
+        if (/^Q\s*:/i.test(trimmed)) {
+          question = trimmed.replace(/^Q\s*:/i, '').trim();
+        } else if (/^A\s*:/i.test(trimmed)) {
+          answer = trimmed.replace(/^A\s*:/i, '').trim();
+        } else if (/^D\s*:/i.test(trimmed)) {
+          const diff = trimmed.replace(/^D\s*:/i, '').trim().toLowerCase();
           if (['easy', 'medium', 'hard'].includes(diff)) {
             difficulty = diff;
           }
@@ -229,17 +230,17 @@ const generateQuizFromText = async (text, numQuestions = 5) => {
       let question = '', options = [], correctAnswer = '', explanation = '', difficulty = 'medium';
 
       for (const line of lines) {
-        const trimmed = line.trim();
-        if (trimmed.startsWith('Q:')) {
-          question = trimmed.substring(2).trim();
-        } else if (trimmed.match(/^O\d:/)) {
-          options.push(trimmed.substring(3).trim());
-        } else if (trimmed.startsWith('C:')) {
-          correctAnswer = trimmed.substring(2).trim();
-        } else if (trimmed.startsWith('E:')) {
-          explanation = trimmed.substring(2).trim();
-        }else if (trimmed.startsWith('D:')) {
-          const diff = trimmed.substring(2).trim().toLowerCase();
+        const trimmed = line.trim().replace(/^[-*]\s*/, '').replace(/^\d+\.\s*/, '').replace(/\*\*/g, '');
+        if (/^Q\s*:/i.test(trimmed)) {
+          question = trimmed.replace(/^Q\s*:/i, '').trim();
+        } else if (/^O\s*\d\s*:/i.test(trimmed)) {
+          options.push(trimmed.replace(/^O\s*\d\s*:/i, '').trim());
+        } else if (/^C\s*:/i.test(trimmed)) {
+          correctAnswer = trimmed.replace(/^C\s*:/i, '').trim();
+        } else if (/^E\s*:/i.test(trimmed)) {
+          explanation = trimmed.replace(/^E\s*:/i, '').trim();
+        }else if (/^D\s*:/i.test(trimmed)) {
+          const diff = trimmed.replace(/^D\s*:/i, '').trim().toLowerCase();
           if (['easy', 'medium', 'hard'].includes(diff)) {
             difficulty = diff;
           }
