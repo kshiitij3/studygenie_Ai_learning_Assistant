@@ -50,7 +50,7 @@ export const getDashboard = async(req, res ,next) => {
     const studyStreak = Math.floor(Math.random() * 7) + 1; // Mock data
 
     res.status(200).json({
-      succcess: true,
+      success: true,
       data: {
         overview: {
           totalDocuments,

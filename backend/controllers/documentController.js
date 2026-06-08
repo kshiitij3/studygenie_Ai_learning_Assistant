@@ -3,6 +3,7 @@ import Flashcard from '../models/Flashcard.js';
 import Quiz from '../models/Quiz.js';
 import {extractTextFromPDF} from '../utils/pdfParser.js';
 import {chunkText} from '../utils/textChunker.js';
+import cloudinary, { isCloudinaryConfigured } from '../config/cloudinary.js';
 import fs from 'fs/promises';
 import path from 'path';
 import mongoose from 'mongoose';
@@ -24,9 +25,19 @@ const resolveDocumentFilePath = (document) => {
   }
 
   if (storedPath.startsWith('http://') || storedPath.startsWith('https://')) {
-    const url = new URL(storedPath);
-    const filename = decodeURIComponent(path.basename(url.pathname));
-    return path.join(uploadDir, filename);
+    try {
+      const url = new URL(storedPath);
+      const localHost = `http://localhost:${process.env.PORT || 8000}`;
+      const altLocalHost = `https://localhost:${process.env.PORT || 8000}`;
+
+      if (storedPath.startsWith(localHost) || storedPath.startsWith(altLocalHost)) {
+        const filename = decodeURIComponent(path.basename(url.pathname));
+        return path.join(uploadDir, filename);
+      }
+    } catch {
+      return null;
+    }
+    return null;
   }
 
   const filename = decodeURIComponent(path.basename(storedPath));
@@ -55,28 +66,60 @@ export const uploadDocument = async(req, res, next)=>{
           statusCode:400
         });
       }
-//construct the url for the upload file
-     const baseUrl = 'https://studygenie-ai-learning-assistant.vercel.app';
-     const fileUrl = `${baseUrl}/uploads/documents/${encodeURIComponent(req.file.filename)}`;
-       
-     const document = await Document.create({
-      userId: req.user._id,
-      title,
-      fileName:req.file.originalname,
-      filepath:fileUrl,//store the Url insted of the local path
-      fileSize: req.file.size,
-      status:"processing"
-     });
-     //process PDF in background(in production use queue like Bull)
-     processPDF(document._id,req.file.path).catch(err=>{
-      console.error('pdf processing error:',err);
 
-     });
-     res.status(201).json({
-      success:true,
+      if (!isCloudinaryConfigured) {
+        await fs.unlink(req.file.path).catch(() => {});
+        return res.status(500).json({
+          success: false,
+          error: 'Cloudinary is not configured',
+          statusCode: 500
+        });
+      }
+
+      let cloudinaryResult;
+      try {
+        cloudinaryResult = await cloudinary.uploader.upload(req.file.path, {
+          resource_type: 'raw',
+          folder: 'studygenie/documents',
+          public_id: `studygenie-doc-${Date.now()}-${req.file.originalname.replace(/\.[^/.]+$/, '')}`,
+        });
+      } catch (cloudError) {
+        await fs.unlink(req.file.path).catch(() => {});
+        console.error('Cloudinary upload failed:', cloudError);
+        return res.status(500).json({
+          success: false,
+          error: 'Failed to upload document to Cloudinary',
+          statusCode: 500
+        });
+      }
+
+      let document;
+      try {
+        document = await Document.create({
+          userId: req.user._id,
+          title,
+          fileName: req.file.originalname,
+          filepath: cloudinaryResult.secure_url,
+          cloudinaryPublicId: cloudinaryResult.public_id,
+          fileSize: req.file.size,
+          status: 'processing'
+        });
+      } catch (dbError) {
+        await cloudinary.uploader.destroy(cloudinaryResult.public_id, { resource_type: 'raw' }).catch(() => {});
+        await fs.unlink(req.file.path).catch(() => {});
+        return next(dbError);
+      }
+
+      // process PDF in background (extract text, create chunks)
+      processPDF(document._id, req.file.path).catch(err => {
+        console.error('pdf processing error:', err);
+      });
+
+      res.status(201).json({
+        success:true,
         data:document,
-        message:'Document uploaded successfully.processing in process...'
-     })
+        message:'Document uploaded to Cloudinary successfully. Processing in progress...'
+      });
   }
   catch(error){
     if(req.file){
@@ -98,13 +141,15 @@ const processPDF = async(documentId ,filePath)=>{
           status:'ready'
 
         });
-        console.log(`Document ${documentId}processed successfully`);
+        console.log(`Document ${documentId} processed successfully`);
     }
     catch(error){
       console.error(`Error processing document ${documentId}:`,error);
       await Document.findByIdAndUpdate(documentId,{
         status:'error'
-      });
+      }).catch(err => console.error('Failed to update document status:', err));
+    } finally {
+      await fs.unlink(filePath).catch(() => {});
     }
 };
 
@@ -219,12 +264,16 @@ export const getDocuments =async(req, res, next)=>{
 
        const filePath = resolveDocumentFilePath(document);
 
-       if(!filePath){
-        return res.status(404).json({
-          success: false,
-          error: "PDF file not found",
-          statusCode:404
-        });
+       if (!filePath) {
+         if (document.filepath && (document.filepath.startsWith('http://') || document.filepath.startsWith('https://'))) {
+           return res.redirect(document.filepath);
+         }
+
+         return res.status(404).json({
+           success: false,
+           error: "PDF file not found",
+           statusCode:404
+         });
        }
 
        await fs.access(filePath);
@@ -259,18 +308,25 @@ export const getDocuments =async(req, res, next)=>{
         });
 
        }
-       // Resolve local file path from stored URL
-       let filePath = resolveDocumentFilePath(document);
 
-       if(filePath){
-        await fs.unlink(filePath).catch(()=>{});
+       if (document.cloudinaryPublicId) {
+         try {
+           await cloudinary.uploader.destroy(document.cloudinaryPublicId, { resource_type: 'raw' });
+         } catch (cloudError) {
+           console.error('Cloudinary deletion failed:', cloudError);
+         }
        }
 
-       //delete document
+       // Resolve local file path from stored URL for legacy/local files
+       const filePath = resolveDocumentFilePath(document);
+       if (filePath) {
+         await fs.unlink(filePath).catch(()=>{});
+       }
+
        await document.deleteOne();
         res.status(200).json({
           success: true,
-          message:"Document delete successfully",
+          message:"Document deleted successfully",
         });
         
   }
