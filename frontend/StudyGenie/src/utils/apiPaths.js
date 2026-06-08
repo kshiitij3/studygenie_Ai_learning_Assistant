@@ -1,4 +1,4 @@
-export const BASE_URL = "http://localhost:8000"; // Update with your backend URL
+export const BASE_URL = import.meta.env.VITE_API_URL || "https://studygenie-ai-learning-assistant.vercel.app";
 
 export const API_PATHS = {
   AUTH: {
