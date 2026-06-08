@@ -122,7 +122,7 @@ const ProfilePage = () => {
                   value={currentPassword}
                   onChange={(e) => setCurrentPassword(e.target.value)}
                   required
-                  className='w-full h-9 pl-9 pr-3 pt-2 border border-neutral-200 rounded-lg bg-white placeholder-neutral-400 text-sm text-neutral-900 transition-colors duration-150 focus:outline-none focus:ring-2 focus:ring-[#00d492] focus:border-transparent'
+                  className='w-full h-9 pl-9 pr-3 pt-2 border border-neutral-200 rounded-lg bg-white placeholder-neutral-400 text-sm text-neutral-900 transition-colors duration-150 focus:outline-none focus:ring-2 focus:ring-brand-primary focus:border-transparent'
                  /> 
               </div>
             </div>
@@ -139,7 +139,7 @@ const ProfilePage = () => {
                   value={newPassword}
                   onChange={(e) => setNewPassword(e.target.value)}
                   required
-                  className='w-full h-9 pl-9 pr-3 pt-2 border border-neutral-200 rounded-lg bg-white placeholder-neutral-400 text-sm text-neutral-900 transition-colors duration-150 focus:outline-none focus:ring-2 focus:ring-[#00d492] focus:border-transparent'
+                  className='w-full h-9 pl-9 pr-3 pt-2 border border-neutral-200 rounded-lg bg-white placeholder-neutral-400 text-sm text-neutral-900 transition-colors duration-150 focus:outline-none focus:ring-2 focus:ring-brand-primary focus:border-transparent'
                  /> 
             </div>
             </div>
@@ -156,7 +156,7 @@ const ProfilePage = () => {
                   value={confirmNewPassword}
                   onChange={(e) => setConfirmNewPassword(e.target.value)}
                   required
-                  className='w-full h-9 pl-9 pr-3 pt-2 border border-neutral-200 rounded-lg bg-white placeholder-neutral-400 text-sm text-neutral-900 transition-colors duration-150 focus:outline-none focus:ring-2 focus:ring-[#00d492] focus:border-transparent'
+                  className='w-full h-9 pl-9 pr-3 pt-2 border border-neutral-200 rounded-lg bg-white placeholder-neutral-400 text-sm text-neutral-900 transition-colors duration-150 focus:outline-none focus:ring-2 focus:ring-brand-primary focus:border-transparent'
                  /> 
                 </div> 
             </div>

@@ -15,7 +15,7 @@ const MarkdownRenderer =({content})=>{
         h3: (props) => <h3 className="text-md font-bold mt-4 mb-2" {...props}/>,
         h4: (props) => <h4 className="text-sm font-bold mt-4 mb-2" {...props}/>,
         p: (props) => <p className="mb-2 leading-relaxed" {...props}/>,
-        a: (props) => <a className="text-[#00d492] hover:underline" {...props}/>,
+        a: (props) => <a className="text-brand-primary hover:underline" {...props}/>,
         ul: (props) => <ul className="list-disc list-inside mb-2 ml-4" {...props}/>,
         ol: (props) => <ol className="list-decimal list-inside mb-2 ml-4" {...props}/>,
         li: (props) => <li className="mb-1" {...props}/>,

@@ -3,7 +3,90 @@
 @theme{
   --font-display:"Urbanist",sans-serif;
   --breakpoint-3xl:1920px;
-  --color-primary:#FF9324;
+
+  --color-background:#FFFFFF;
+  --color-secondary-background:#FAFBFF;
+  --color-section-background:#F5F8FF;
+  --color-card-background:#FCFDFF;
+  --color-border:#E8EEF9;
+  --color-brand-primary:#2563EB;
+  --color-primary-light:#60A5FA;
+  --color-accent:#F8C75A;
+  --color-heading:#1E293B;
+  --color-body:#64748B;
+  --color-muted:#94A3B8;
+
+  --color-primary:#2563EB;
+
+  --color-slate-50:#F5F8FF;
+  --color-slate-100:#E8EEF9;
+  --color-slate-200:#E8EEF9;
+  --color-slate-300:#60A5FA;
+  --color-slate-400:#94A3B8;
+  --color-slate-500:#64748B;
+  --color-slate-600:#64748B;
+  --color-slate-700:#1E293B;
+  --color-slate-800:#1E293B;
+  --color-slate-900:#1E293B;
+
+  --color-neutral-50:#FAFBFF;
+  --color-neutral-100:#F5F8FF;
+  --color-neutral-200:#E8EEF9;
+  --color-neutral-300:#60A5FA;
+  --color-neutral-400:#94A3B8;
+  --color-neutral-500:#64748B;
+  --color-neutral-600:#64748B;
+  --color-neutral-700:#1E293B;
+  --color-neutral-800:#1E293B;
+  --color-neutral-900:#1E293B;
+
+  --color-gray-50:#F5F8FF;
+  --color-gray-100:#F5F8FF;
+  --color-gray-200:#E8EEF9;
+  --color-gray-300:#E8EEF9;
+  --color-gray-400:#94A3B8;
+  --color-gray-500:#64748B;
+  --color-gray-600:#64748B;
+  --color-gray-700:#1E293B;
+  --color-gray-800:#1E293B;
+  --color-gray-900:#1E293B;
+
+  --color-blue-50:#F5F8FF;
+  --color-blue-100:#E8EEF9;
+  --color-blue-200:#60A5FA;
+  --color-blue-300:#60A5FA;
+  --color-blue-400:#60A5FA;
+  --color-blue-500:#2563EB;
+  --color-blue-600:#2563EB;
+  --color-blue-700:#2563EB;
+
+  --color-emerald-50:#F5F8FF;
+  --color-emerald-100:#E8EEF9;
+  --color-emerald-200:#60A5FA;
+  --color-emerald-300:#60A5FA;
+  --color-emerald-400:#60A5FA;
+  --color-emerald-500:#2563EB;
+  --color-emerald-600:#2563EB;
+  --color-emerald-700:#2563EB;
+
+  --color-teal-50:#F5F8FF;
+  --color-teal-100:#E8EEF9;
+  --color-teal-200:#60A5FA;
+  --color-teal-300:#60A5FA;
+  --color-teal-400:#60A5FA;
+  --color-teal-500:#60A5FA;
+  --color-teal-600:#2563EB;
+  --color-teal-700:#2563EB;
+
+  --color-purple-500:#2563EB;
+  --color-amber-50:#F5F8FF;
+  --color-amber-100:#F8C75A;
+  --color-amber-200:#F8C75A;
+  --color-amber-300:#F8C75A;
+  --color-amber-400:#F8C75A;
+  --color-amber-500:#F8C75A;
+  --color-yellow-400:#F8C75A;
+  --color-yellow-500:#F8C75A;
 }
 
 @layer base{
@@ -11,7 +94,7 @@
     font-family: var(--font-display);
   }
   body {
-    background-color: #fcfbfc;
-    
+    background-color: #FFFFFF;
+    color: #64748B;
   }
 }
