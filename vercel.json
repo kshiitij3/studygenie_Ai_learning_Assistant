@@ -20,8 +20,11 @@
     {
       "src": "/api/(.*)",
       "dest": "/backend/server.js"
+    },
+    {
+      "src": "/(.*)",
+      "dest": "/frontend/StudyGenie/dist/index.html"
     }
   ]
 }
 
-  
