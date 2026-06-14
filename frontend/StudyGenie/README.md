@@ -109,3 +109,4 @@ StudyGenie is a full-stack, AI-powered learning platform designed to turn docume
 ## Contact
 
 If you'd like to see this project in action or discuss the architecture, I'm happy to walk through the code and design decisions.
+
