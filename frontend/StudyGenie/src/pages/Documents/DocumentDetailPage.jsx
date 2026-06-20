@@ -18,6 +18,7 @@ const DocumentDetailPage = () => {
   const [loading, setLoading] = useState(true);
   const [pdfUrl, setPdfUrl] = useState(null);
   const [pdfLoading, setPdfLoading] = useState(false);
+  const [pdfError, setPdfError] = useState('');
   const [activeTab, setActiveTab] = useState('Content');
 
   useEffect(() => {
@@ -38,8 +39,12 @@ const DocumentDetailPage = () => {
   }, [id]);
 
   useEffect(() => {
-    if (!document?.data?.filepath) {
+    const filePath = document?.data?.filepath;
+
+    if (!filePath) {
       setPdfUrl(null);
+      setPdfError('');
+      setPdfLoading(false);
       return;
     }
 
@@ -48,6 +53,7 @@ const DocumentDetailPage = () => {
 
     const fetchPdf = async () => {
       setPdfLoading(true);
+      setPdfError('');
       try {
         const blob = await documentService.getDocumentFile(id);
         if (cancelled) return;
@@ -55,10 +61,11 @@ const DocumentDetailPage = () => {
         objectUrl = URL.createObjectURL(blob);
         setPdfUrl(objectUrl);
       } catch (error) {
-        toast.error('Failed to load document preview.');
         console.error(error);
         if (!cancelled) {
           setPdfUrl(null);
+          setPdfError(error?.message || error?.error || 'Failed to load document preview.');
+          toast.error('Failed to load document preview.');
         }
       } finally {
         if (!cancelled) {
@@ -85,16 +92,27 @@ const DocumentDetailPage = () => {
       return <div className='text-center p-8'>PDF not available.</div>
     }
 
+    if (pdfError) {
+      return (
+        <div className="rounded-lg border border-red-200 bg-red-50 p-6 text-sm text-red-700">
+          <p className="font-medium mb-1">Preview unavailable</p>
+          <p>{pdfError}</p>
+        </div>
+      );
+    }
+
     if (pdfLoading || !pdfUrl) {
       return <Spinner />;
     }
+
+    const previewUrl = pdfUrl || document.data.filepath;
 
   return(
     <div className="bg-white border border-gray-300 rounded-lg overflow-hidden shadow-sm">
       <div className="flex items-center justify-between p-4 bg-gray-50 border-b border-gray-300">
         <span className="text-sm font-medium text-gray-700">Document Viewer</span>
         <a
-        href ={pdfUrl}
+        href ={previewUrl}
         target= "_blank"
         rel="noopener noreferrer"
         className="inline-flex items-center gap-1.5 text-sm text-blue-600 hover:text-blue-700 font-medium transition-colors">
@@ -104,7 +122,7 @@ const DocumentDetailPage = () => {
       </div>
       <div className="bg-gray-100 p-1">
         <iframe
-          src={pdfUrl}
+          src={previewUrl}
           className="w-full h-[70vh] bg-white rounded border border-gray-300"
           title="PDF viewer"
         />

@@ -1,6 +1,19 @@
 import axiosInstance from '../utils/axiosInstance';
 import { API_PATHS } from '../utils/apiPaths';
 
+const parseBlobError = async (payload) => {
+  if (payload instanceof Blob && payload.type.includes('application/json')) {
+    try {
+      const text = await payload.text();
+      return JSON.parse(text);
+    } catch {
+      return { message: 'Failed to fetch document file' };
+    }
+  }
+
+  return payload;
+};
+
 const getDocuments = async () => {
    try {
      const response = await axiosInstance.get(API_PATHS.DOCUMENTS.GET_DOCUMENTS);
@@ -50,7 +63,8 @@ const getDocumentFile = async (id) => {
 
      return response.data;
    } catch (error) {
-    throw error.response?.data || { message: 'Failed to fetch document file' };
+    const errorData = error.response?.data ? await parseBlobError(error.response.data) : null;
+    throw errorData || { message: 'Failed to fetch document file' };
    }
 };
 

@@ -8,6 +8,50 @@ import fs from 'fs/promises';
 import mongoose from 'mongoose';
 import cloudinary, { isCloudinaryConfigured } from '../config/cloudinary.js';
 
+const isRemoteHttpUrl = (value) => /^https?:\/\//i.test(value || '');
+
+const buildCloudinaryPreviewUrl = (fileUrl) => {
+  try {
+    const url = new URL(fileUrl);
+
+    if (!url.pathname.includes('/upload/')) {
+      return null;
+    }
+
+    url.pathname = url.pathname.replace('/upload/', '/upload/pg_1,f_jpg/');
+    url.pathname = url.pathname.replace(/\.pdf$/i, '.jpg');
+
+    return url.toString();
+  } catch {
+    return null;
+  }
+};
+
+const streamRemoteResponse = (remoteResponse, res, next, filename, fallbackContentType = 'application/octet-stream') => {
+  if (!remoteResponse.ok || !remoteResponse.body) {
+    return false;
+  }
+
+  const contentType = remoteResponse.headers.get('content-type') || fallbackContentType;
+  const canPreview = contentType.includes('pdf') || contentType.startsWith('image/');
+
+  if (!canPreview) {
+    return false;
+  }
+
+  res.setHeader('Content-Type', contentType);
+  res.setHeader(
+    'Content-Disposition',
+    `inline; filename="${encodeURIComponent(filename)}"`
+  );
+  res.setHeader('Cache-Control', 'private, no-store');
+
+  const stream = Readable.fromWeb(remoteResponse.body);
+  stream.on('error', next);
+  stream.pipe(res);
+  return true;
+};
+
 const uploadPdfToCloudinary = (file) => {
   return new Promise((resolve, reject) => {
     const uploadStream = cloudinary.uploader.upload_stream(
@@ -290,28 +334,41 @@ export const getDocumentFile = async (req, res, next) => {
       });
     }
 
-    if (document.filepath.startsWith('http://') || document.filepath.startsWith('https://')) {
-      const remoteResponse = await fetch(document.filepath);
+    if (isRemoteHttpUrl(document.filepath)) {
+      const filename = document.fileName || `${document.title}.pdf`;
+      let remoteResponse = null;
 
-      if (!remoteResponse.ok || !remoteResponse.body) {
-        return res.status(502).json({
-          success: false,
-          error: 'Unable to fetch document file',
-          statusCode: 502
-        });
+      try {
+        remoteResponse = await fetch(document.filepath);
+      } catch {
+        remoteResponse = null;
       }
 
-      res.setHeader('Content-Type', remoteResponse.headers.get('content-type') || 'application/pdf');
-      res.setHeader(
-        'Content-Disposition',
-        `inline; filename="${encodeURIComponent(document.fileName || `${document.title}.pdf`)}"`
-      );
-      res.setHeader('Cache-Control', 'private, no-store');
+      if (remoteResponse && streamRemoteResponse(remoteResponse, res, next, filename, 'application/pdf')) {
+        return;
+      }
 
-      const stream = Readable.fromWeb(remoteResponse.body);
-      stream.on('error', next);
-      stream.pipe(res);
-      return;
+      const previewUrl = buildCloudinaryPreviewUrl(document.filepath);
+
+      if (previewUrl) {
+        let previewResponse = null;
+
+        try {
+          previewResponse = await fetch(previewUrl);
+        } catch {
+          previewResponse = null;
+        }
+
+        if (previewResponse && streamRemoteResponse(previewResponse, res, next, filename, 'image/jpeg')) {
+          return;
+        }
+      }
+
+      return res.status(502).json({
+        success: false,
+        error: 'Unable to fetch document preview',
+        statusCode: 502
+      });
     }
 
     return res.sendFile(document.filepath, (error) => {
