@@ -17,11 +17,6 @@ axiosInstance.interceptors.request.use(
     if (accessToken) {
       config.headers.Authorization = `Bearer ${accessToken}`;
     }
-
-    if (config.data instanceof FormData) {
-      delete config.headers["Content-Type"];
-    }
-
     return config;
   },
   (error) => {
@@ -37,7 +32,7 @@ axiosInstance.interceptors.response.use(
   (error) => {
     if (error.response) {
       if (error.response.status === 500) {
-        console.error("Server error. Please try again later.");
+        console.error(error.response.data?.error || "Server error. Please try again later.");
       }
     } else if (error.code === "ECONNABORTED") {
       console.error("Request timeout. Please try again.");

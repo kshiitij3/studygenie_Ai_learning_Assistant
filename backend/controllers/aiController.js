@@ -36,27 +36,11 @@ export const generateFlashcards = async (req, res, next) => {
       });
      }
 
-     if(!document.extractedText?.trim()) {
-      return res.status(422).json({
-        success: false,
-        error: 'No readable text was extracted from this PDF. Please try a text-based PDF.',
-        statusCode: 422
-      });
-     }
-
      // Generate flashcards using Gemini
      const cards = await geminiService.generateFlashcards(
       document.extractedText,
       parseInt(count)
      );
-
-     if(!cards.length) {
-      return res.status(422).json({
-        success: false,
-        error: 'AI could not generate flashcards from this document. Please try another PDF or generate fewer cards.',
-        statusCode: 422
-      });
-     }
 
      // Save to database
      const flashcardSet = await Flashcard.create({
@@ -111,27 +95,11 @@ export const generateQuiz = async (req, res, next) => {
       });
      }
 
-     if(!document.extractedText?.trim()) {
-      return res.status(422).json({
-        success: false,
-        error: 'No readable text was extracted from this PDF. Please try a text-based PDF.',
-        statusCode: 422
-      });
-     }
-
      // Generate quiz using Gemini
      const questions = await geminiService.generateQuiz(
       document.extractedText,
       parseInt(numQuestions)
      );
-
-     if(!questions.length) {
-      return res.status(422).json({
-        success: false,
-        error: 'AI could not generate quiz questions from this document. Please try another PDF or fewer questions.',
-        statusCode: 422
-      });
-     }
 
      // Save to database
      const quiz = await Quiz.create({
@@ -251,12 +219,12 @@ export const chat = async (req, res, next) => {
         messages: []
       });
      }
-
+    
      // Generate response using Gemini
      const answer = await geminiService.chatWithContext(question, relevantChunks);
 
      // Save conversation
-     chatHistory.messages.push(
+     chatHistory.message.push(
       {
         role: 'user',
         content: question,
@@ -323,6 +291,7 @@ export const explainConcept = async (req, res, next) => {
      const relevantChunks = findRelevantChunks(document.chunks, concept, 3);
      const context = relevantChunks.map( c => c.content).join('\n\n');
 
+    
      // Generate explanation using Gemini
      const explanation = await geminiService.explainConcept(concept, context);
 
@@ -343,7 +312,7 @@ export const explainConcept = async (req, res, next) => {
 };
 
 // @desc  Get chat history for a document
-// @route GET /api/ai/chat-history/:documentId
+// @route GET/api/ai/chat-history/:documentId
 // @access Private
 
 export const getChatHistory = async (req, res, next) => {
@@ -361,7 +330,7 @@ export const getChatHistory = async (req, res, next) => {
      const chatHistory = await ChatHistory.findOne({
       userId: req.user._id,
       documentId: documentId
-     }).select('messages'); // Only retrieve the messages array
+     }).select('message'); // Only retrieve the messages array
 
      if(!chatHistory) {
       return res.status(200).json({
@@ -371,9 +340,10 @@ export const getChatHistory = async (req, res, next) => {
       });
      }
 
+    
      res.status(200).json({
       success: true,
-      data: chatHistory.messages,
+      data: chatHistory.message,
       message: 'Chat history retrieved successfully'
      });
 

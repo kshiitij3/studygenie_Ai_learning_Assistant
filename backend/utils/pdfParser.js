@@ -1,54 +1,25 @@
-import fs from 'fs/promises';
-
-const ensurePdfGlobals = () => {
-  if (typeof global.DOMMatrix === 'undefined') {
-    global.DOMMatrix = class DOMMatrix {
-      constructor() {
-        return this;
-      }
-    };
-  }
-
-  if (typeof global.ImageData === 'undefined') {
-    global.ImageData = class ImageData {
-      constructor(data, width, height) {
-        this.data = data;
-        this.width = width;
-        this.height = height;
-      }
-    };
-  }
-
-  if (typeof global.Path2D === 'undefined') {
-    global.Path2D = class Path2D {
-      constructor(_path) {
-        this.path = _path;
-      }
-    };
-  }
-};
+import { PDFParse } from "pdf-parse";
 
 /**
- * Extract text from pdf file
- * @param {string} filePath =path to PDFfile
- * @return {promise<{text: string,numpages:number}>}
- * */
-export const extractTextFromPDF = async (filePath) => {
+ * Extract text from PDF buffer
+ * @param{Buffer|Uint8Array} pdfBuffer - PDF file buffer
+ * @returns {Promise<{text: string, numPages: number}>}
+ */
+
+export const extractTextFromPDF = async (pdfBuffer) => {
   try {
-    ensurePdfGlobals();
-    const dataBuffer = await fs.readFile(filePath);
-    ////pdf-parse expects a Unit8Array, not a buffer
-    const pdfParseModule = await import('pdf-parse');
-    const pdfParseFn = pdfParseModule.default || pdfParseModule;
-    const data = await pdfParseFn(dataBuffer);
+    // pdf-parse expects a Uint8Array, not a Buffer
+    const parser = new PDFParse(new Uint8Array(pdfBuffer));
+    const data = await parser.getText();
 
     return {
-      text: data.text || '',
-      numPages: data.numpages ?? data.numPages ?? 0,
+      text: data.text,
+      numPages: data.numPages,
       info: data.info,
     };
+
   } catch (error) {
-    console.error('PDF parsing error:', error);
-    throw new Error('failed to extract text from file');
+     console.log("PDF parsing error:", error);
+     throw new Error("Failed to extract text from PDF");
   }
 };

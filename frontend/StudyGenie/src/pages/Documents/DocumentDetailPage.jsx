@@ -10,90 +10,84 @@ import Tabs from '../../component/common/Tabs';
 import AIActions from '../../component/ai/AIActions';
 import FlashcardManager from '../../component/Flashcards/FlashcardManager';
 import QuizManager from '../../component/quizzes/QuizManager';
-const DocumentDetailPage= ()=>{
 
-  const {id} =useParams();
+const DocumentDetailPage = () => {
+
+  const { id } = useParams();
   const [document, setDocument] = useState(null);
   const [loading, setLoading] = useState(true);
   const [pdfUrl, setPdfUrl] = useState(null);
   const [pdfLoading, setPdfLoading] = useState(false);
-  const [activeTab, setActiveTab]= useState('Content');
+  const [activeTab, setActiveTab] = useState('Content');
 
-  useEffect(()=>{
-    const fetchDocumentDetails = async () =>{
-      try{
+  useEffect(() => {
+    const fetchDocumentsDetails = async () => {
+      try {
         const data = await documentService.getDocumentById(id);
-        setDocument((data));
-      }catch(error){
-        toast.error('failed to fetch document details');
-        console.error('Failed to fetch document details', error);
-      }finally{
+        setDocument(data);
+      } catch (error) {
+        toast.error('Failed to fetch document details.');
+        console.error(error);
+      } finally {
         setLoading(false);
       }
-    }; 
-  fetchDocumentDetails();
-},
-[id]);
-useEffect(() => {
-  if (!document?.data?.filepath) {
-    setPdfUrl(null);
-    return;
-  }
 
-  let objectUrl;
-  const fetchPdf = async () => {
-    setPdfLoading(true);
-    try {
-      const blob = await documentService.getDocumentFile(id);
-      objectUrl = URL.createObjectURL(blob);
-      setPdfUrl(objectUrl);
-    } catch (error) {
-      console.error('Failed to load protected PDF, falling back to stored URL', error);
-      setPdfUrl(getStoredPDFUrl(document.data.filepath));
-    } finally {
-      setPdfLoading(false);
+    };
+
+    fetchDocumentsDetails();
+  }, [id]);
+
+  useEffect(() => {
+    if (!document?.data?.filepath) {
+      setPdfUrl(null);
+      return;
     }
-  };
 
-  fetchPdf();
+    let objectUrl;
+    let cancelled = false;
 
-  return () => {
-    if (objectUrl) {
-      URL.revokeObjectURL(objectUrl);
+    const fetchPdf = async () => {
+      setPdfLoading(true);
+      try {
+        const blob = await documentService.getDocumentFile(id);
+        if (cancelled) return;
+
+        objectUrl = URL.createObjectURL(blob);
+        setPdfUrl(objectUrl);
+      } catch (error) {
+        toast.error('Failed to load document preview.');
+        console.error(error);
+        if (!cancelled) {
+          setPdfUrl(null);
+        }
+      } finally {
+        if (!cancelled) {
+          setPdfLoading(false);
+        }
+      }
+    };
+
+    fetchPdf();
+
+    return () => {
+      cancelled = true;
+      if (objectUrl) {
+        URL.revokeObjectURL(objectUrl);
+      }
+    };
+  }, [id, document?.data?.filepath]);
+
+  const renderContent = () => {
+    if (loading) {
+      return <Spinner />;
     }
-  };
-}, [document, id]);
-//Helper function to get the stored PDF url
-const getStoredPDFUrl =(filePath)=>{
-  if(!filePath) return null;
-
-  if(filePath.startsWith('http://')|| filePath.startsWith('https://')){
-    try {
-      const url = new URL(filePath);
-      url.pathname = url.pathname
-        .split('/')
-        .map((part) => encodeURIComponent(decodeURIComponent(part)))
-        .join('/');
-      return url.toString();
-    } catch {
-      return filePath;
+    if (!document || !document.data || !document.data.filepath) {
+      return <div className='text-center p-8'>PDF not available.</div>
     }
-  }
 
-  const baseUrl = import.meta.env.VITE_API_URL || 'http://localhost:8000';
-  return `${baseUrl}${filePath.startsWith('/') ? '':'/'}${filePath}`;
-};
- 
-const renderContent =()=>{
-  if(loading){
-    return <Spinner/>
-  }
-  if(!document || !document.data ||!document.data.filepath){
-    return <div className="text-center p-8">PDF not available.</div>
-  }
-  if(pdfLoading || !pdfUrl){
-    return <Spinner/>
-  }
+    if (pdfLoading || !pdfUrl) {
+      return <Spinner />;
+    }
 
   return(
     <div className="bg-white border border-gray-300 rounded-lg overflow-hidden shadow-sm">
@@ -109,14 +103,11 @@ const renderContent =()=>{
         </a>
       </div>
       <div className="bg-gray-100 p-1">
-        <iframe 
-        src={pdfUrl}
-        className="w-full h-[70vh] bg-white rounded border border-gray-300"
-        title="PDF viewer"
-        frameBorder="0"
-        style={{
-          colorScheme:'light',
-        }}/>
+        <iframe
+          src={pdfUrl}
+          className="w-full h-[70vh] bg-white rounded border border-gray-300"
+          title="PDF viewer"
+        />
       </div>
     </div>
   );

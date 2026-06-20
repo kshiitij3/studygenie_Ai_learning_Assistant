@@ -12,10 +12,15 @@ const getDocuments = async () => {
 
 const uploadDocument = async (formData) => {
    try {
-     const response = await axiosInstance.post(API_PATHS.DOCUMENTS.UPLOAD, formData);
+     const response = await axiosInstance.post(API_PATHS.DOCUMENTS.UPLOAD, formData, {
+      headers: {
+        'Content-Type': 'multipart/form-data',
+      },
+    });
      return response.data;
    } catch (error) {
-    throw error.response?.data || { message: 'Failed to upload document' };
+    const message = error.response?.data?.error || error.response?.data?.message || 'Failed to upload document';
+    throw { message };
    }
 };
 
@@ -42,6 +47,7 @@ const getDocumentFile = async (id) => {
      const response = await axiosInstance.get(API_PATHS.DOCUMENTS.GET_DOCUMENT_FILE(id), {
       responseType: 'blob',
     });
+
      return response.data;
    } catch (error) {
     throw error.response?.data || { message: 'Failed to fetch document file' };
