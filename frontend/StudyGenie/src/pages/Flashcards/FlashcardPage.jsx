@@ -16,7 +16,7 @@ import Spinner from '../../component/common/Spinner';
 import EmptyState from '../../component/common/EmptyState';
 import Button from '../../component/common/Button';
 import Modal from '../../component/common/Modal';
-import Flashcard from '../../component/flashcards/Flashcard';
+import Flashcard from '../../component/Flashcards/Flashcard';
 
 const FlashcardPage = () => {
 
