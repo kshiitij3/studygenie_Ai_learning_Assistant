@@ -1,4 +1,4 @@
-import React, { useState, useEffect} from 'react';
+import React, { useState, useEffect, useCallback} from 'react';
 import { useParams,Link } from 'react-router-dom';
 import { 
   ArrowLeft, 
@@ -29,7 +29,7 @@ const FlashcardPage = () => {
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [deleting, setDeleting] = useState(false);
 
-  const fetchFlashcards = async () => {
+  const fetchFlashcards = useCallback(async () => {
     setLoading(true);
     try {
       const response = await flashcardService.getFlashcardsForDocument(
@@ -44,11 +44,11 @@ const FlashcardPage = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [documentId]);
 
   useEffect(() => {
       fetchFlashcards();
-  }, [documentId]);
+  }, [documentId, fetchFlashcards]);
 
   const handleGenerateFlashcards = async () => {
     setGenerating(true);

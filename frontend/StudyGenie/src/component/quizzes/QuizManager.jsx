@@ -1,4 +1,4 @@
-import React, { useState, useEffect} from 'react';
+import React, { useState, useEffect, useCallback} from 'react';
 import { Plus, Trash2 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import quizService from '../../services/quizService.js';
@@ -19,7 +19,7 @@ const QuizManager = ({documentId}) => {
  const [deleting, setDeleting] = useState(false);
  const [selectedQuiz, setSelectedQuiz] = useState(null);
 
- const fetchQuizzes = async () => {
+ const fetchQuizzes = useCallback(async () => {
   setLoading(true);
   try {
     const data = await quizService.getQuizzesForDocument(documentId);
@@ -30,13 +30,13 @@ const QuizManager = ({documentId}) => {
   } finally {
     setLoading(false);
   }
- };
+ }, [documentId]);
 
  useEffect(() => {
   if (documentId) {
     fetchQuizzes();
   }
- }, [documentId]);
+ }, [documentId, fetchQuizzes]);
 
   const handleGenerateQuiz = async (e) => {
     e.preventDefault();

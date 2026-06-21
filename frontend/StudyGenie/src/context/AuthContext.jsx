@@ -1,5 +1,5 @@
 /* eslint-disable react-refresh/only-export-components */
-import React,{ createContext, useContext, useState, useEffect} from "react";
+import React,{ createContext, useContext, useState, useEffect, useCallback} from "react";
 
 const AuthContext = createContext();
 
@@ -16,11 +16,16 @@ export const AuthProvider =({children})=>{
   const [loading,setLoading] = useState(true);
   const [isAuthenticated,setIsAuthenticated] = useState(false);
 
-  useEffect(()=>{
-    checkAuthStatus();
-  },[]);
+  const logout = useCallback(() => {
+    localStorage.removeItem('token');
+    localStorage.removeItem('user');
+     
+    setUser(null);
+    setIsAuthenticated(false);
+    window.location.href = '/'
+  }, []);
 
-  const checkAuthStatus = async ()=>{
+  const checkAuthStatus = useCallback(async ()=>{
     try{
       const token = localStorage.getItem('token');
       const userStr = localStorage.getItem('user');
@@ -37,29 +42,25 @@ export const AuthProvider =({children})=>{
       setLoading(false);
 
     }
-      };
-      const login =(userData , token)=>{
+      }, [logout]);
+
+  useEffect(()=>{
+    checkAuthStatus();
+  },[checkAuthStatus]);
+
+      const login = useCallback((userData , token)=>{
         localStorage.setItem('token', token);
         localStorage.setItem('user',JSON.stringify(userData));
 
         setUser(userData);
         setIsAuthenticated(true);
-      }
+      }, []);
 
-      const logout = ()=>{
-        localStorage.removeItem('token');
-        localStorage.removeItem('user');
-         
-        setUser(null);
-        setIsAuthenticated(false);
-        window.location.href = '/'
-      };
-
-      const updateUser = (updatedUserData)=>{
+      const updateUser = useCallback((updatedUserData)=>{
         const newUserData = {...user,...updatedUserData};
         localStorage.setItem('user',JSON.stringify(newUserData));
         setUser(newUserData);
-      }
+      }, [user]);
     const value ={
       user,
       loading,
