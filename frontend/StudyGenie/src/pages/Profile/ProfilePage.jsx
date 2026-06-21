@@ -1,9 +1,9 @@
 import React, { useState, useEffect} from 'react';
 import toast from "react-hot-toast";
-import PageHeader from '../../component/common/PageHeader';
-import Spinner from "../../component/common/Spinner";
-import Button from '../../component/common/Button';
-import authService from '../../services/authService';
+import PageHeader from '../../component/common/PageHeader.jsx';
+import Spinner from "../../component/common/Spinner.jsx";
+import Button from '../../component/common/Button.jsx';
+import authService from '../../services/authService.js';
 import { User, Mail, Lock} from 'lucide-react';
 
 

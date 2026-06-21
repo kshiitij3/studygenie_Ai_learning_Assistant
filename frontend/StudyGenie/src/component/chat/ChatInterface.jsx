@@ -1,10 +1,10 @@
 import React, {useState, useEffect, useRef} from 'react';
 import {Send, MessageSquare, Sparkles} from 'lucide-react';
 import {useParams} from 'react-router-dom';
-import aiService from '../../services/aiService';
-import {useAuth} from '../../context/AuthContext';
-import Spinner from '../common/Spinner';
-import MarkdownRenderer from '../common/MarkdownRenderer';
+import aiService from '../../services/aiService.js';
+import {useAuth} from '../../context/AuthContext.jsx';
+import Spinner from '../common/Spinner.jsx';
+import MarkdownRenderer from '../common/MarkdownRenderer.jsx';
 
 const ChatInterface = () =>{
    const {id : documentId} = useParams();

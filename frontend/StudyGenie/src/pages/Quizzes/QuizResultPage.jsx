@@ -1,8 +1,8 @@
 import React, {useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
-import quizService from '../../services/quizService';
-import PageHeader from '../../component/common/PageHeader';
-import Spinner from '../../component/common/Spinner';
+import quizService from '../../services/quizService.js';
+import PageHeader from '../../component/common/PageHeader.jsx';
+import Spinner from '../../component/common/Spinner.jsx';
 import toast from 'react-hot-toast';
 import { ArrowLeft, CheckCircle2, XCircle, Trophy, Target, BookOpen } from 'lucide-react';
 

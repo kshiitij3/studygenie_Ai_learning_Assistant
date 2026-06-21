@@ -1,6 +1,6 @@
 import React, { useState,useEffect } from "react";
-import Spinner from '../../component/common/Spinner';
-import progressService from "../../services/progressService";
+import Spinner from '../../component/common/Spinner.jsx';
+import progressService from "../../services/progressService.js";
 import { BrainCircuit, BookOpen, Clock, TrendingUp, FileText } from "lucide-react";
 import toast from "react-hot-toast";
 

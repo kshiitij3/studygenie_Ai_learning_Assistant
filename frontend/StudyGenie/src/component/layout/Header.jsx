@@ -1,5 +1,5 @@
 import React from 'react';
-import {useAuth} from "../../context/AuthContext";
+import {useAuth} from "../../context/AuthContext.jsx";
 import {Bell, User, Menu} from 'lucide-react';
 const Header =({toggleSidebar})=>{
   const {user} = useAuth();

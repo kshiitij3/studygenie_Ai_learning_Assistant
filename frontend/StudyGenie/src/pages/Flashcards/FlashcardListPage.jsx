@@ -1,10 +1,10 @@
 import React, { useState, useEffect} from 'react';
-import flashcardService from '../../services/flashcardService';
+import flashcardService from '../../services/flashcardService.js';
 import toast from "react-hot-toast";
-import PageHeader from '../../component/common/PageHeader';
-import Spinner from "../../component/common/Spinner";
-import EmptyState from '../../component/common/EmptyState';
-import FlashcardSetCard from '../../component/Flashcards/FlashcardSetCard';
+import PageHeader from '../../component/common/PageHeader.jsx';
+import Spinner from "../../component/common/Spinner.jsx";
+import EmptyState from '../../component/common/EmptyState.jsx';
+import FlashcardSetCard from '../../component/Flashcards/FlashcardSetCard.jsx';
 
 const FlashcardListPage = () => {
   const [flashcardSets, setFlashcardSets] = useState([]);

@@ -1,11 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { ChevronLeft, ChevronRight, CheckCircle2 } from 'lucide-react';
-import quizService from '../../services/quizService';
-import PageHeader from '../../component/common/PageHeader';
-import Spinner from '../../component/common/Spinner';
+import quizService from '../../services/quizService.js';
+import PageHeader from '../../component/common/PageHeader.jsx';
+import Spinner from '../../component/common/Spinner.jsx';
 import toast from 'react-hot-toast';
-import Button from '../../component/common/Button';
+import Button from '../../component/common/Button.jsx';
 
 const QuizTakePage = () => {
   const { quizId } = useParams();

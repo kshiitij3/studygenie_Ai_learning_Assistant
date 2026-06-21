@@ -1,5 +1,5 @@
-import axiosInstance from '../utils/axiosInstance';
-import { API_PATHS } from '../utils/apiPaths';
+import axiosInstance from '../utils/axiosInstance.js';
+import { API_PATHS } from '../utils/apiPaths.js';
 
 const parseBlobError = async (payload) => {
   if (payload instanceof Blob && payload.type.includes('application/json')) {

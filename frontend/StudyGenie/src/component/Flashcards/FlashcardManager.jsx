@@ -11,11 +11,11 @@ import {
 import toast from 'react-hot-toast';
 import moment from 'moment';
 
-import flashcardService from "../../services/flashcardService";
-import aiService from '../../services/aiService';
-import Spinner from '../common/Spinner';
-import Modal from '../common/Modal';
-import Flashcard from './Flashcard';
+import flashcardService from "../../services/flashcardService.js";
+import aiService from '../../services/aiService.js';
+import Spinner from '../common/Spinner.jsx';
+import Modal from '../common/Modal.jsx';
+import Flashcard from './Flashcard.jsx';
 
 const FlashcardManager = ({documentId}) => {
 

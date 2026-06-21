@@ -9,14 +9,14 @@ import {
 } from "lucide-react";
 import toast from "react-hot-toast";
 
-import flashcardService from '../../services/flashcardService';
-import aiService from '../../services/aiService';
-import PageHeader from '../../component/common/PageHeader';
-import Spinner from '../../component/common/Spinner';
-import EmptyState from '../../component/common/EmptyState';
-import Button from '../../component/common/Button';
-import Modal from '../../component/common/Modal';
-import Flashcard from '../../component/Flashcards/Flashcard';
+import flashcardService from '../../services/flashcardService.js';
+import aiService from '../../services/aiService.js';
+import PageHeader from '../../component/common/PageHeader.jsx';
+import Spinner from '../../component/common/Spinner.jsx';
+import EmptyState from '../../component/common/EmptyState.jsx';
+import Button from '../../component/common/Button.jsx';
+import Modal from '../../component/common/Modal.jsx';
+import Flashcard from '../../component/Flashcards/Flashcard.jsx';
 
 const FlashcardPage = () => {
 

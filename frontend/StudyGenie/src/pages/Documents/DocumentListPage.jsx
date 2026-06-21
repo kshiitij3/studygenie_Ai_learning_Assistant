@@ -1,10 +1,10 @@
 import React, { useState, useEffect} from 'react';
 import { Plus, Upload, Trash2, FileText, X } from "lucide-react";
 import toast from "react-hot-toast";
-import documentService from "../../services/documentService";
-import Spinner from "../../component/common/Spinner";
-import Button from '../../component/common/Button';
-import DocumentCard from '../../component/documents/DocumentCard';
+import documentService from "../../services/documentService.js";
+import Spinner from "../../component/common/Spinner.jsx";
+import Button from '../../component/common/Button.jsx';
+import DocumentCard from '../../component/documents/DocumentCard.jsx';
 
 const DocumentListPage = () => {
 

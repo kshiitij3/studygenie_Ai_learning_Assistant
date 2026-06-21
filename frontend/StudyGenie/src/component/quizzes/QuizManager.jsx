@@ -1,13 +1,13 @@
 import React, { useState, useEffect} from 'react';
 import { Plus, Trash2 } from 'lucide-react';
 import toast from 'react-hot-toast';
-import quizService from '../../services/quizService';
-import aiService from '../../services/aiService';
-import Spinner from '../common/Spinner';
-import Button from '../common/Button';
-import Modal from '../common/Modal';
-import QuizCard from './QuizCard';
-import EmptyState from '../common/EmptyState';
+import quizService from '../../services/quizService.js';
+import aiService from '../../services/aiService.js';
+import Spinner from '../common/Spinner.jsx';
+import Button from '../common/Button.jsx';
+import Modal from '../common/Modal.jsx';
+import QuizCard from './QuizCard.jsx';
+import EmptyState from '../common/EmptyState.jsx';
 
 const QuizManager = ({documentId}) => {
  const [quizzes, setQuizzes] = useState([]);

@@ -1,15 +1,15 @@
 import React,{useState, useEffect} from "react";
 import {useParams,Link} from 'react-router-dom';
-import documentService from '../../services/documentService';
-import Spinner from '../../component/common/Spinner';
-import ChatInterface from '../../component/chat/ChatInterface';
+import documentService from '../../services/documentService.js';
+import Spinner from '../../component/common/Spinner.jsx';
+import ChatInterface from '../../component/chat/ChatInterface.jsx';
 import toast from 'react-hot-toast';
 import {ArrowLeft, ExternalLink} from 'lucide-react';
-import PageHeader from '../../component/common/PageHeader';
-import Tabs from '../../component/common/Tabs';
-import AIActions from '../../component/ai/AIActions';
-import FlashcardManager from '../../component/Flashcards/FlashcardManager';
-import QuizManager from '../../component/quizzes/QuizManager';
+import PageHeader from '../../component/common/PageHeader.jsx';
+import Tabs from '../../component/common/Tabs.jsx';
+import AIActions from '../../component/ai/AIActions.jsx';
+import FlashcardManager from '../../component/Flashcards/FlashcardManager.jsx';
+import QuizManager from '../../component/quizzes/QuizManager.jsx';
 
 const DocumentDetailPage = () => {
 

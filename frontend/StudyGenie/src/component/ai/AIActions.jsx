@@ -1,10 +1,10 @@
 import React, { useState } from 'react';
 import { Lightbulb, BookOpen, Sparkles } from 'lucide-react';
 import { useParams } from 'react-router-dom';
-import aiService from '../../services/aiService';
+import aiService from '../../services/aiService.js';
 import toast from 'react-hot-toast';
-import MarkdownRenderer from '../common/MarkdownRenderer';
-import Modal from '../common/Modal';
+import MarkdownRenderer from '../common/MarkdownRenderer.jsx';
+import Modal from '../common/Modal.jsx';
 
 const AIActions = () => {
 
