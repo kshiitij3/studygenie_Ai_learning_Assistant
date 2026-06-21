@@ -1,5 +1,5 @@
 import React, { useState, useEffect} from 'react';
-import flashcardService from '../../services/flashcardService.js';
+import flashcardService from '../../services/flashcardservice.js';
 import toast from "react-hot-toast";
 import PageHeader from '../../component/common/PageHeader.jsx';
 import Spinner from "../../component/common/Spinner.jsx";

@@ -1,6 +1,6 @@
 import React,{useState, useEffect} from "react";
 import {useParams,Link} from 'react-router-dom';
-import documentService from '../../services/documentService.js';
+import documentService from '../../services/documentservice.js';
 import Spinner from '../../component/common/Spinner.jsx';
 import ChatInterface from '../../component/chat/ChatInterface.jsx';
 import toast from 'react-hot-toast';

@@ -9,8 +9,8 @@ import {
 } from "lucide-react";
 import toast from "react-hot-toast";
 
-import flashcardService from '../../services/flashcardService.js';
-import aiService from '../../services/aiService.js';
+import flashcardService from '../../services/flashcardservice.js';
+import aiService from '../../services/aiservice.js';
 import PageHeader from '../../component/common/PageHeader.jsx';
 import Spinner from '../../component/common/Spinner.jsx';
 import EmptyState from '../../component/common/EmptyState.jsx';

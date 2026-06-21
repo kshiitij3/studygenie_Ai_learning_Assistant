@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import authService from '../../services/authService.js';
+import authService from '../../services/authservice.js';
 import { BrainCircuit, Mail, Lock, ArrowRight, User } from 'lucide-react';
 import toast from 'react-hot-toast';
 

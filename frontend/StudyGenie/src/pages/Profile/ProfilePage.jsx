@@ -3,7 +3,7 @@ import toast from "react-hot-toast";
 import PageHeader from '../../component/common/PageHeader.jsx';
 import Spinner from "../../component/common/Spinner.jsx";
 import Button from '../../component/common/Button.jsx';
-import authService from '../../services/authService.js';
+import authService from '../../services/authservice.js';
 import { User, Mail, Lock} from 'lucide-react';
 
 

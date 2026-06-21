@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { ChevronLeft, ChevronRight, CheckCircle2 } from 'lucide-react';
-import quizService from '../../services/quizService.js';
+import quizService from '../../services/quizservice.js';
 import PageHeader from '../../component/common/PageHeader.jsx';
 import Spinner from '../../component/common/Spinner.jsx';
 import toast from 'react-hot-toast';

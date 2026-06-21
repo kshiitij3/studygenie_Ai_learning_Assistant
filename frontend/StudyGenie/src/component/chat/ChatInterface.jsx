@@ -1,7 +1,7 @@
 import React, {useState, useEffect, useRef} from 'react';
 import {Send, MessageSquare, Sparkles} from 'lucide-react';
 import {useParams} from 'react-router-dom';
-import aiService from '../../services/aiService.js';
+import aiService from '../../services/aiservice.js';
 import {useAuth} from '../../context/AuthContext.jsx';
 import Spinner from '../common/Spinner.jsx';
 import MarkdownRenderer from '../common/MarkdownRenderer.jsx';

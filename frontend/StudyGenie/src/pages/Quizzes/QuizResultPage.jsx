@@ -1,6 +1,6 @@
 import React, {useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
-import quizService from '../../services/quizService.js';
+import quizService from '../../services/quizservice.js';
 import PageHeader from '../../component/common/PageHeader.jsx';
 import Spinner from '../../component/common/Spinner.jsx';
 import toast from 'react-hot-toast';
