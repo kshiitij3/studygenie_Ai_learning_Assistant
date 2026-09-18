@@ -202,9 +202,14 @@ export const chat = async (req, res, next) => {
       });
      }
 
-     // Find relevant chunks
-     const relevantChunks = findRelevantChunks(document.chunks, question, 3);
-     const chunkIndices = relevantChunks.map( c => c.chunkIndex);
+     const normalizedChunks = Array.isArray(document.chunks) && document.chunks.length > 0
+       ? document.chunks
+       : (document.extractedText ? await chunkText(document.extractedText, 500, 50) : []);
+
+     // Find relevant chunks. Fall back to the first few chunks so Gemini always gets context.
+     const relevantChunks = findRelevantChunks(normalizedChunks, question, 3);
+     const fallbackChunks = relevantChunks.length > 0 ? relevantChunks : normalizedChunks.slice(0, 3);
+     const chunkIndices = fallbackChunks.map(c => c.chunkIndex ?? 0);
 
      // Get or create chat History
      let chatHistory = await ChatHistory.findOne({
@@ -221,10 +226,10 @@ export const chat = async (req, res, next) => {
      }
     
      // Generate response using Gemini
-     const answer = await geminiService.chatWithContext(question, relevantChunks);
+     const answer = await geminiService.chatWithContext(question, fallbackChunks);
 
      // Save conversation
-     chatHistory.message.push(
+     chatHistory.messages.push(
       {
         role: 'user',
         content: question,
@@ -330,20 +335,20 @@ export const getChatHistory = async (req, res, next) => {
      const chatHistory = await ChatHistory.findOne({
       userId: req.user._id,
       documentId: documentId
-     }).select('message'); // Only retrieve the messages array
+     }).select('messages');
 
      if(!chatHistory) {
       return res.status(200).json({
         success: true,
-        data: [], // Return an empty array if no chat history found
-        messages: 'No chat history found for this document'
+        data: [],
+        message: 'No chat history found for this document'
       });
      }
 
     
      res.status(200).json({
       success: true,
-      data: chatHistory.message,
+      data: Array.isArray(chatHistory.messages) ? chatHistory.messages : [],
       message: 'Chat history retrieved successfully'
      });
 

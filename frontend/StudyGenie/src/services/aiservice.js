@@ -42,7 +42,7 @@ const chat = async (documentId, message) => {
       documentId,
       question: message
      }); //Removed history from payload
-     return response.data;
+     return response.data?.data ?? response.data;
    } catch (error) {
     throw error.response?.data || { message: 'Chat request failed' };
    }
@@ -63,7 +63,7 @@ const explainConcept = async (documentId, concept) => {
 const getChatHistory = async (documentId) => {
    try {
      const response = await axiosInstance.get(API_PATHS.AI.GET_CHAT_HISTORY(documentId));
-     return response.data;
+     return response.data?.data ?? response.data ?? [];
    } catch (error) {
     throw error.response?.data || { message: 'Failed to fetch chat history' };
    }

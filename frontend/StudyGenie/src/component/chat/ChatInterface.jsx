@@ -24,9 +24,11 @@ const ChatInterface = () =>{
       try{
         setInitialLoading(true);
         const response = await aiService.getChatHistory(documentId);
-        setHistory(response.data);
+        const normalizedHistory = Array.isArray(response) ? response : Array.isArray(response?.data) ? response.data : [];
+        setHistory(normalizedHistory);
       }catch(error){
         console.error('failed to fetch chat history', error);
+        setHistory([]);
       }finally{
         setInitialLoading(false);
       }
@@ -43,7 +45,7 @@ const ChatInterface = () =>{
     if(!message.trim())return;
 
     const userMessage = {role: 'user',content: message,timestamp: new Date()};
-    setHistory(prev =>[...prev, userMessage]);
+    setHistory(prev => [...(Array.isArray(prev) ? prev : []), userMessage]);
     setMessage('');
     setLoading(true);
 
@@ -51,11 +53,11 @@ const ChatInterface = () =>{
         const response = await aiService.chat(documentId, userMessage.content);
         const assistantMessage ={
           role:'assistant',
-          content: response.data.answer,
+          content: response?.answer || 'I could not generate a response for that question.',
           timestamp: new Date(),
-          relevantChunks: response.data.relevantChunks
+          relevantChunks: response?.relevantChunks || []
         };
-        setHistory(prev =>[...prev, assistantMessage]);
+        setHistory(prev => [...(Array.isArray(prev) ? prev : []), assistantMessage]);
     }catch(error){
       console.error('Chat error:',error);
       const errorMessage ={
@@ -64,12 +66,12 @@ const ChatInterface = () =>{
         timestamp: new Date()
 
       };
-      setHistory(prev=>[...prev, errorMessage]);
+      setHistory(prev => [...(Array.isArray(prev) ? prev : []), errorMessage]);
     }
     finally{
       setLoading(false);
     }
-   };
+  };
 
    const renderMessage =(msg, index) =>{
     const isUser = msg.role ==='user';
@@ -113,11 +115,13 @@ const ChatInterface = () =>{
       </div>
     );
    }
+   const safeHistory = Array.isArray(history) ? history : [];
+
    return(
     <div className='flex flex-col h-[70vh] bg-white/80 backdrop-blur-xl border border-slate-200/60 rounded-2xl shadow-xl shadow-slate-200/50 overflow-hidden'>
       {/*Messages Area */}
       <div className='flex-1 p-6 overflow-y-auto bg-linear-to-br from-slate-50/50 via-white/50 to-slate-50/50'>
-        {history.length ===0 ? (
+        {safeHistory.length ===0 ? (
           <div className='flex flex-col items-center justify-center h-full text-center'>
             <div className='w-16 h-16 rounded-2xl bg-linear-to-br from-emerald-100 to-teal-100 flex items-center justify-center mb-4 shadow-lg shadow-emerald-500/10'>
               <MessageSquare className='w-8 h-8 text-emerald-600' strokeWidth={2} />
@@ -126,7 +130,7 @@ const ChatInterface = () =>{
             <p className='text-sm text-slate-500'>Ask me anything about the document</p>
           </div>
         ):(
-          history.map(renderMessage)
+          safeHistory.map(renderMessage)
         )}
         <div ref={messageEndRef}/>
         {loading && (

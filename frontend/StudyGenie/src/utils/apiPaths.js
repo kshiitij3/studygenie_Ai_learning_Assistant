@@ -1,5 +1,5 @@
-export const BASE_URL = 
-    "https://studygenie-ai-learning-assistant-backend.onrender.com";
+export const BASE_URL =
+    "https://studygenie-ai-learning-assistant-backend.onrender.com" || "http://localhost:8000";
 
 export const API_PATHS = {
   AUTH: {
