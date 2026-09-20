@@ -10,30 +10,18 @@ import cloudinary, { isCloudinaryConfigured } from '../config/cloudinary.js';
 
 const isRemoteHttpUrl = (value) => /^https?:\/\//i.test(value || '');
 
-const buildCloudinaryPreviewUrl = (fileUrl) => {
-  try {
-    const url = new URL(fileUrl);
-
-    if (!url.pathname.includes('/upload/')) {
-      return null;
-    }
-
-    url.pathname = url.pathname.replace('/upload/', '/upload/pg_1,f_jpg/');
-    url.pathname = url.pathname.replace(/\.pdf$/i, '.jpg');
-
-    return url.toString();
-  } catch {
-    return null;
-  }
-};
-
 const streamRemoteResponse = (remoteResponse, res, next, filename, fallbackContentType = 'application/octet-stream') => {
   if (!remoteResponse.ok || !remoteResponse.body) {
     return false;
   }
 
-  const contentType = remoteResponse.headers.get('content-type') || fallbackContentType;
-  const canPreview = contentType.includes('pdf') || contentType.startsWith('image/');
+  const remoteContentType = remoteResponse.headers.get('content-type') || '';
+  // A Cloudinary image transformation of a PDF is a JPEG of page 1. Never
+  // substitute that image for the original document in the PDF viewer.
+  const contentType = remoteContentType.includes('pdf') || !remoteContentType
+    ? 'application/pdf'
+    : remoteContentType;
+  const canPreview = contentType.includes('pdf');
 
   if (!canPreview) {
     return false;
@@ -57,7 +45,9 @@ const uploadPdfToCloudinary = (file) => {
     const uploadStream = cloudinary.uploader.upload_stream(
       {
         folder: process.env.CLOUDINARY_DOCUMENT_FOLDER || 'ai-learning-assistant/documents',
-        resource_type: 'image',
+        // Store the original PDF as a raw asset. Image assets are transformed
+        // by Cloudinary as a first-page preview, which loses later pages.
+        resource_type: 'raw',
         filename_override: file.originalname,
         use_filename: true,
         unique_filename: true,
@@ -197,7 +187,17 @@ export const getDocuments = async (req, res, next) => {
       },
       {
         $addFields: {
-          flashcardCount: { $size: '$flashcardSets'},
+          // flashcardSets contains sets; the UI labels this number as
+          // "flashcards", so count the cards inside each set instead.
+          flashcardCount: {
+            $sum: {
+              $map: {
+                input: '$flashcardSets',
+                as: 'set',
+                in: { $size: { $ifNull: ['$$set.cards', []] } }
+              }
+            }
+          },
           quizCount: {$size: '$quizzes'}
         }
       },
@@ -246,7 +246,14 @@ export const getDocument = async (req, res, next) => {
     }
 
     // Get counts of associated flashcards and quizzes
-    const flashcardCount = await Flashcard.countDocuments({ documentId: document._id, userId: req.user._id});
+    const flashcardSets = await Flashcard.find(
+      { documentId: document._id, userId: req.user._id },
+      { cards: 1 }
+    ).lean();
+    const flashcardCount = flashcardSets.reduce(
+      (total, set) => total + (Array.isArray(set.cards) ? set.cards.length : 0),
+      0
+    );
     const quizCount = await Quiz.countDocuments({ documentId: document._id, userId: req.user._id});
 
     // Update last accessed
@@ -348,25 +355,33 @@ export const getDocumentFile = async (req, res, next) => {
         return;
       }
 
-      const previewUrl = buildCloudinaryPreviewUrl(document.filepath);
-
-      if (previewUrl) {
-        let previewResponse = null;
-
+      // Cloudinary Free accounts can block public PDF delivery. Generate a
+      // short-lived authenticated download URL on the server so the original,
+      // multi-page document remains available to its owner.
+      if (document.cloudinaryPublicId) {
         try {
-          previewResponse = await fetch(previewUrl);
-        } catch {
-          previewResponse = null;
-        }
+          const signedDownloadUrl = cloudinary.utils.private_download_url(
+            document.cloudinaryPublicId,
+            'pdf',
+            {
+              resource_type: document.cloudinaryResourceType || 'image',
+              type: 'upload',
+              expires_at: Math.floor(Date.now() / 1000) + (5 * 60),
+            }
+          );
+          const signedResponse = await fetch(signedDownloadUrl);
 
-        if (previewResponse && streamRemoteResponse(previewResponse, res, next, filename, 'image/jpeg')) {
-          return;
+          if (streamRemoteResponse(signedResponse, res, next, filename, 'application/pdf')) {
+            return;
+          }
+        } catch (error) {
+          console.error(`Unable to retrieve Cloudinary PDF ${document._id}:`, error.message);
         }
       }
 
       return res.status(502).json({
         success: false,
-        error: 'Unable to fetch document preview',
+        error: 'Unable to fetch the original PDF document',
         statusCode: 502
       });
     }

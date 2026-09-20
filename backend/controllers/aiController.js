@@ -3,7 +3,7 @@ import Flashcard from "../models/Flashcard.js";
 import Quiz from "../models/Quiz.js";
 import ChatHistory from '../models/ChatHistory.js';
 import * as geminiService from '../utils/geminiService.js';
-import { findRelevantChunks } from "../utils/textChunker.js";
+import { chunkText, findRelevantChunks } from "../utils/textChunker.js";
 
 
 // @desc  Generate flashcards from document
@@ -41,6 +41,14 @@ export const generateFlashcards = async (req, res, next) => {
       document.extractedText,
       parseInt(count)
      );
+
+     // Do not create a misleading empty flashcard set when the model returned
+     // output we could not parse (or no output at all).
+     if (!Array.isArray(cards) || cards.length === 0) {
+      const error = new Error('No flashcards could be generated from this document');
+      error.statusCode = 422;
+      throw error;
+     }
 
      // Save to database
      const flashcardSet = await Flashcard.create({
@@ -100,6 +108,12 @@ export const generateQuiz = async (req, res, next) => {
       document.extractedText,
       parseInt(numQuestions)
      );
+
+     if (!Array.isArray(questions) || questions.length === 0) {
+      const error = new Error('No quiz questions could be generated from this document');
+      error.statusCode = 422;
+      throw error;
+     }
 
      // Save to database
      const quiz = await Quiz.create({

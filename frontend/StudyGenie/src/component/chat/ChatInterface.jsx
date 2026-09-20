@@ -60,9 +60,10 @@ const ChatInterface = () =>{
         setHistory(prev => [...(Array.isArray(prev) ? prev : []), assistantMessage]);
     }catch(error){
       console.error('Chat error:',error);
+      const reason = error?.error || error?.message || 'The AI service could not answer right now.';
       const errorMessage ={
         role:'assistant',
-        content:'Sorry, I encountered an error, Please try again',
+        content:`Sorry, I couldn't answer that. ${reason}`,
         timestamp: new Date()
 
       };

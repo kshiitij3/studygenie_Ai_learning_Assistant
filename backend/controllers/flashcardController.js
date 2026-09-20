@@ -7,7 +7,8 @@ import Flashcard from "../models/Flashcard.js";
 export const getFlashcards = async (req, res, next) => {
   try {
    const flashcards = await Flashcard.find({
-    documentId: req.params.documentId
+    documentId: req.params.documentId,
+    userId: req.user._id
    })
      .populate('documentId', 'title fileName')
      .sort({ createdAt: -1});

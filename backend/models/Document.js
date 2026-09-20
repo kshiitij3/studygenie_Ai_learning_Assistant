@@ -26,7 +26,7 @@ const documentSchema = new mongoose.Schema({
   },
   cloudinaryResourceType: {
     type: String,
-    default: 'image'
+    default: 'raw'
   },
   fileSize: {
     type: Number,

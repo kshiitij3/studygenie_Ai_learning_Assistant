@@ -11,6 +11,18 @@ if (!process.env.GEMINI_API_KEY) {
   process.exit(1);
 }
 
+const createAIError = (error, fallbackMessage) => {
+  const status = error?.status || error?.error?.code;
+
+  if (status === 429 || /quota|resource_exhausted|rate limit/i.test(error?.message || '')) {
+    const quotaError = new Error('The AI request limit has been reached. Please wait a minute and try again, or enable Gemini API billing for a higher limit.');
+    quotaError.statusCode = 429;
+    return quotaError;
+  }
+
+  return new Error(fallbackMessage);
+};
+
 /**
  * Deduplicate flashcards based on similarity
  * @param {Array<Object>} cards - Array of flashcard objects
@@ -21,6 +33,7 @@ const deduplicateFlashcards = (cards) => {
   const questionSet = new Set();
 
   for (const card of cards) {
+    if (!card?.question || !card?.answer) continue;
     const normalizedQ = card.question.toLowerCase().replace(/[^\w\s]/g, '').trim();
     
     // Check if similar question already exists
@@ -43,6 +56,22 @@ const deduplicateFlashcards = (cards) => {
   return unique;
 };
 
+const deduplicateQuizQuestions = (questions) => {
+  const unique = [];
+  const seenQuestions = new Set();
+
+  for (const question of questions) {
+    if (!question?.question || !Array.isArray(question.options) || question.options.length !== 4 || !question.correctAnswer) continue;
+    const key = question.question.toLowerCase().replace(/[^\w\s]/g, '').trim();
+    if (!seenQuestions.has(key)) {
+      unique.push(question);
+      seenQuestions.add(key);
+    }
+  }
+
+  return unique;
+};
+
 /**
  * Generate flashcards from text chunks (improved version)
  * @param {string} text - Document text
@@ -51,20 +80,28 @@ const deduplicateFlashcards = (cards) => {
  */
 
 export const generateFlashcards = async (text, count = 10) => {
+  if (!text?.trim()) {
+    throw new Error('This document has no extractable text to generate flashcards from');
+  }
+
+  const requestedCount = Math.max(1, Math.min(Number(count) || 10, 30));
   // Split text into chunks for comprehensive coverage
   const chunks = chunkText(text, 800, 100);
   
   // If text is short, use old method
   if (chunks.length === 0 || text.length < 2000) {
-    return generateFlashcardsFromText(text, count);
+    return generateFlashcardsFromText(text, requestedCount);
   }
 
-  const cardsPerChunk = Math.ceil(count / chunks.length);
+  // A long document can contain dozens of chunks. Sending them all at once
+  // exhausts API quotas and previously resulted in an empty set being saved.
+  const selectedChunks = chunks.slice(0, Math.min(chunks.length, requestedCount, 6));
+  const cardsPerChunk = Math.ceil(requestedCount / selectedChunks.length);
   const allCards = [];
 
   try {
     // Generate flashcards from each chunk in parallel
-    const chunkPromises = chunks.map(chunk =>
+    const chunkPromises = selectedChunks.map(chunk =>
       generateFlashcardsFromText(chunk.content, cardsPerChunk).catch(err => {
         console.warn('Error generating flashcards from chunk:', err.message);
         return [];
@@ -76,11 +113,16 @@ export const generateFlashcards = async (text, count = 10) => {
 
     // Deduplicate and return top results
     const uniqueCards = deduplicateFlashcards(allCards);
-    return uniqueCards.slice(0, count);
+    if (uniqueCards.length > 0) {
+      return uniqueCards.slice(0, requestedCount);
+    }
+
+    // Do not treat per-chunk failures as a successful empty result.
+    return generateFlashcardsFromText(text.substring(0, 6000), requestedCount);
   } catch (error) {
     console.error('Bulk flashcard generation error:', error);
     // Fallback to single chunk
-    return generateFlashcardsFromText(text.substring(0, 3000), count);
+    return generateFlashcardsFromText(text.substring(0, 6000), requestedCount);
   }
 };
 
@@ -110,11 +152,11 @@ const generateFlashcardsFromText = async (text, count = 10) => {
       contents: prompt,
     });
 
-    const generatedText = response.text;
+    const generatedText = response.text || '';
 
     // Parse the response
     const flashcards  =[];
-    const cards = generatedText.split('---').filter(c => c.trim());
+    const cards = generatedText.split(/(?:^|\n)\s*---\s*(?:\n|$)/).filter(c => c.trim());
 
     for (const card of cards) {
       const lines = card.trim().split('\n');
@@ -122,12 +164,12 @@ const generateFlashcardsFromText = async (text, count = 10) => {
 
       for (const line of lines) {
         const trimmed = line.trim().replace(/^[-*]\s*/, '').replace(/^\d+\.\s*/, '').replace(/\*\*/g, '');
-        if (/^Q\s*:/i.test(trimmed)) {
-          question = trimmed.replace(/^Q\s*:/i, '').trim();
-        } else if (/^A\s*:/i.test(trimmed)) {
-          answer = trimmed.replace(/^A\s*:/i, '').trim();
-        } else if (/^D\s*:/i.test(trimmed)) {
-          const diff = trimmed.replace(/^D\s*:/i, '').trim().toLowerCase();
+        if (/^(?:Q|Question)\s*:/i.test(trimmed)) {
+          question = trimmed.replace(/^(?:Q|Question)\s*:/i, '').trim();
+        } else if (/^(?:A|Answer)\s*:/i.test(trimmed)) {
+          answer = trimmed.replace(/^(?:A|Answer)\s*:/i, '').trim();
+        } else if (/^(?:D|Difficulty)\s*:/i.test(trimmed)) {
+          const diff = trimmed.replace(/^(?:D|Difficulty)\s*:/i, '').trim().toLowerCase();
           if (['easy', 'medium', 'hard'].includes(diff)) {
             difficulty = diff;
           }
@@ -143,7 +185,7 @@ const generateFlashcardsFromText = async (text, count = 10) => {
      return flashcards.slice(0, count);
   } catch (error) {
    console.error('Gemini API error:', error);
-   throw new Error('Failed to generate flashcards');
+   throw createAIError(error, 'Failed to generate flashcards');
   }
 };
 
@@ -155,20 +197,26 @@ const generateFlashcardsFromText = async (text, count = 10) => {
  */
 
 export const generateQuiz = async (text, numQuestions = 5) => {
+  if (!text?.trim()) {
+    throw new Error('This document has no extractable text to generate quiz questions from');
+  }
+
+  const requestedCount = Math.max(1, Math.min(Number(numQuestions) || 5, 30));
   // Split text into chunks for comprehensive coverage
   const chunks = chunkText(text, 800, 100);
   
   // If text is short, use old method
   if (chunks.length === 0 || text.length < 2000) {
-    return generateQuizFromText(text, numQuestions);
+    return generateQuizFromText(text, requestedCount);
   }
 
-  const questionsPerChunk = Math.ceil(numQuestions / chunks.length);
+  const selectedChunks = chunks.slice(0, Math.min(chunks.length, requestedCount, 6));
+  const questionsPerChunk = Math.ceil(requestedCount / selectedChunks.length);
   const allQuestions = [];
 
   try {
     // Generate quiz from each chunk in parallel
-    const chunkPromises = chunks.map(chunk =>
+    const chunkPromises = selectedChunks.map(chunk =>
       generateQuizFromText(chunk.content, questionsPerChunk).catch(err => {
         console.warn('Error generating quiz from chunk:', err.message);
         return [];
@@ -179,12 +227,16 @@ export const generateQuiz = async (text, numQuestions = 5) => {
     results.forEach(questions => allQuestions.push(...questions));
 
     // Deduplicate and return top results
-    const uniqueQuestions = deduplicateFlashcards(allQuestions); // Use same dedup logic
-    return uniqueQuestions.slice(0, numQuestions);
+    const uniqueQuestions = deduplicateQuizQuestions(allQuestions);
+    if (uniqueQuestions.length > 0) {
+      return uniqueQuestions.slice(0, requestedCount);
+    }
+
+    return generateQuizFromText(text.substring(0, 6000), requestedCount);
   } catch (error) {
     console.error('Bulk quiz generation error:', error);
     // Fallback to single chunk
-    return generateQuizFromText(text.substring(0, 3000), numQuestions);
+    return generateQuizFromText(text.substring(0, 6000), requestedCount);
   }
 };
 
@@ -219,11 +271,11 @@ const generateQuizFromText = async (text, numQuestions = 5) => {
       contents: prompt,
     });
 
-    const generatedText = response.text;
+    const generatedText = response.text || '';
 
     // Parse the response
     const questions = [];
-    const questionBlocks = generatedText.split('---').filter(q => q.trim());
+    const questionBlocks = generatedText.split(/(?:^|\n)\s*---\s*(?:\n|$)/).filter(q => q.trim());
 
     for (const block of questionBlocks) {
       const lines = block.trim().split('\n');
@@ -231,8 +283,8 @@ const generateQuizFromText = async (text, numQuestions = 5) => {
 
       for (const line of lines) {
         const trimmed = line.trim().replace(/^[-*]\s*/, '').replace(/^\d+\.\s*/, '').replace(/\*\*/g, '');
-        if (/^Q\s*:/i.test(trimmed)) {
-          question = trimmed.replace(/^Q\s*:/i, '').trim();
+        if (/^(?:Q|Question)\s*:/i.test(trimmed)) {
+          question = trimmed.replace(/^(?:Q|Question)\s*:/i, '').trim();
         } else if (/^O\s*\d\s*:/i.test(trimmed)) {
           options.push(trimmed.replace(/^O\s*\d\s*:/i, '').trim());
         } else if (/^C\s*:/i.test(trimmed)) {
@@ -256,7 +308,7 @@ const generateQuizFromText = async (text, numQuestions = 5) => {
      return questions.slice(0, numQuestions);
   } catch (error) {
    console.error('Gemini API error:', error);
-   throw new Error('Failed to generate quiz');
+   throw createAIError(error, 'Failed to generate quiz');
   }
 };
 
@@ -340,7 +392,7 @@ const generateSummaryFromText = async (text, isComposite = false) => {
      return generatedText;
   } catch (error) {
    console.error('Gemini API error:', error);
-   throw new Error('Failed to generate summary');
+   throw createAIError(error, 'Failed to generate summary');
   }
 };
 
@@ -376,7 +428,7 @@ export const chatWithContext = async (question, chunks) => {
    return generatedText;
   } catch (error) {
    console.error('Gemini API error:', error);
-   throw new Error('Failed to process chat request');
+   throw createAIError(error, 'Failed to process chat request');
   }
 };
 
@@ -408,6 +460,6 @@ export const explainConcept = async (concept, context) => {
    return generatedText;
   } catch (error) {
    console.error('Gemini API error:', error);
-   throw new Error('Failed to explain concept');
+   throw createAIError(error, 'Failed to explain concept');
   }
 };
