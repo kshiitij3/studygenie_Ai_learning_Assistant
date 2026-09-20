@@ -1,4 +1,5 @@
 import React, { useState,useEffect } from "react";
+import { Link } from "react-router-dom";
 import Spinner from '../../component/common/Spinner.jsx';
 import progressService from "../../services/progressService.js";
 import { BrainCircuit, BookOpen, Clock, TrendingUp, FileText } from "lucide-react";
@@ -121,13 +122,15 @@ const DashboardPage = () => {
                   description: doc.title,
                   timestamp: doc.lastAccessed,
                   link: `/documents/${doc._id}`,
-                  type: 'quiz'
+                  type: 'document'
                 })),
                 ...(dashboardData.recentActivity.quizzes || []).map(quiz => ({
                   id: quiz._id,
                   description: quiz.title,
                   timestamp: quiz.completedAt,
-                  link: `/quizzes/${quiz._id}`,
+                  link: quiz.completedAt
+                    ? `/quizzes/${quiz._id}/results`
+                    : `/quizzes/${quiz._id}`,
                   type: 'quiz'
                 }))
               ]
@@ -154,12 +157,12 @@ const DashboardPage = () => {
                            </p>
                            </div>
                            {activity.link && (
-                            <a
-                              href={activity.link}
+                              <Link
+                                to={activity.link}
                               className="ml-4 px-4 py-2 text-xs font-semibold text-emerald-600 hover:text-emerald-700 hover:bg-emerald-50 rounded-lg transition-all duration-200 whitespace-nowrap"
                               >
                                 View
-                              </a>
+                              </Link>
                            )}
                            </div>
                 ))}
